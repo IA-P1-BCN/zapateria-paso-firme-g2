@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Edit(./backend/**)",
+      "Write(./backend/**)",
+      "Edit(./frontend/**)",
+      "Write(./frontend/**)",
+      "Edit(./data/**)",
+      "Write(./data/**)",
+      "Read(./.env)"
+    ],
+    "ask": [
+      "Edit(./automation/**)",
+      "Write(./automation/**)",
+      "Edit(./workflows/**)",
+      "Write(./workflows/**)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git merge:*)",
+      "Bash(gh pr create:*)",
+      "Bash(docker compose down:*)"
+    ],
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(python scripts/sync_agents.py:*)",
+      "Bash(python scripts/validate_agent_infra.py:*)",
+      "Bash(python scripts/new_feature.py:*)",
+      "Bash(python -m json.tool:*)"
+    ]
+  }
+}
