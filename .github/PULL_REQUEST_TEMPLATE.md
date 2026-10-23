@@ -2,9 +2,7 @@
 
 <!-- ¿Qué hace este PR? ¿Qué flujo o parte de la app toca? -->
 
-**Flujo n8n / parte afectada:**
-
-**Historia de usuario relacionada:** Closes #
+**Flujo / tarea (issue):** Closes #
 
 ## 🔄 Tipo de cambio
 
@@ -12,16 +10,17 @@
 - [ ] Mejora de un flujo existente
 - [ ] Arreglo de un bug
 - [ ] Cambio en la app (backend/frontend)
-- [ ] Documentación
+- [ ] Documentación / specs / prompts
 - [ ] Configuración / CI / repo
 
-## ✅ Checklist antes de pedir review
+## ✅ Definition of Done
 
-- [ ] El flujo JSON está exportado desde n8n y versionado en `flujos/` (si toca flujos)
-- [ ] No contiene credenciales, API keys ni IDs personales el JSON exportado
-- [ ] Probado contra la app local (webhook / API respondiendo)
-- [ ] Los tests (`backend/tests`) pasan en local: `cd backend && python -m pytest`
-- [ ] Commits con mensajes claros (`feat:`, `fix:`, `docs:`)
+- [ ] JSON exportado en `flujos/` **sin credenciales ni datos personales**
+- [ ] Probado con los datos de ejemplo (captura o respuesta del webhook en Evidencias)
+- [ ] Tests pasando en local: `cd backend && python -m pytest`
+- [ ] Los importes vienen de la app (sin recalcular en n8n ni plantillas)
+- [ ] Spec / prompt documentado si aplica (specs/, prompts/, docs/ai-log/)
+- [ ] Título del PR en formato Conventional Commits (`feat(f03): …`)
 
 ## 📸 Evidencias
 

@@ -1,0 +1,57 @@
+name: "👟 Flujo n8n"
+description: "Pedir la implementación de un flujo de automatización (HU con criterios de aceptación)"
+title: "[Flujo] "
+labels: ["flujo", "n8n"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Basado en el briefing (`docs/BRIEFING_zapateria.md`). Rama: `gh issue develop <n> --base develop`.
+        Al terminar: PR a `develop` con `Closes #<n>`.
+  - type: input
+    id: flujo
+    attributes:
+      label: Flujo del briefing
+      description: Número y nombre según "🔄 Automatizaciones a construir"
+      placeholder: "Flujo 1: Confirmación al apartar"
+    validations:
+      required: true
+  - type: input
+    id: hu
+    attributes:
+      label: Historia de usuario asociada
+      placeholder: "HU-01"
+  - type: dropdown
+    id: nivel
+    attributes:
+      label: Nivel de entrega
+      options:
+        - esencial
+        - medio
+        - avanzado
+        - experto
+    validations:
+      required: true
+  - type: textarea
+    id: narrativa
+    attributes:
+      label: Narrativa
+      description: En primera persona (cliente, dependienta o Marisa)
+      placeholder: "> Como **cliente**, quiero …, para …"
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Lista comprobable. Los importes los da la app; no se recalculan en n8n ni en plantillas.
+      value: |
+        - [ ]
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: notas
+    attributes:
+      label: Notas / alcance
+      description: Opcional. Enlaces a la Guía de la app, specs o PENDIENTES.
+      placeholder: "Ver docs/guia-de-la-app.md para los endpoints y el webhook."

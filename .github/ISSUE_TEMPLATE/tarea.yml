@@ -1,0 +1,54 @@
+name: "📌 Tarea"
+description: "Tarea técnica (spec, infra, tests, docs…). Suele ser sub-issue de un flujo"
+title: "[Tarea] "
+labels: ["tarea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Rama: `gh issue develop <n> --base develop` (sin issue no hay rama).
+        Al terminar: PR a `develop` con `Closes #<n>` (un Closes por issue).
+  - type: input
+    id: titulo
+    attributes:
+      label: Código de la tarea
+      description: "<código> · descripción corta"
+      placeholder: "C-01 · Ontología de datos · GEST-01 · Script de export"
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: Qué hay que hacer y por qué. Enlaza el flujo padre si aplica.
+      placeholder: "Padre: Flujo 3 (#12)."
+    validations:
+      required: true
+  - type: textarea
+    id: hecho-cuando
+    attributes:
+      label: Hecho cuando
+      description: Criterios de cierre de esta tarea (no del flujo completo).
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: checkboxes
+    id: area
+    attributes:
+      label: Área (marcar)
+      options:
+        - label: backend / datos / fiabilidad
+        - label: frontend / mensajes / panel
+        - label: spec / docs / infra / tests
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Recordatorio DoD (cuando la tarea lleva flujo o código)
+      description: La checklist completa vive en la plantilla de PR y en CONTRIBUTING.md.
+      options:
+        - label: JSON en `flujos/` sin credenciales ni datos personales
+        - label: Probado con datos de ejemplo
+        - label: Importes solo desde la app (sin recalcular)
+        - label: Tests pasando en local
