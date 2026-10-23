@@ -1,0 +1,35 @@
+# Review automático de PRs con Gemini (gratis vía GitHub Models)
+# Si cuota de GitHub Models no llega, alternativa con key propia de Gemini free:
+#   USE_GITHUB_MODELS: false
+#   OPENAI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+#   OPENAI_API_ENDPOINT: https://generativelanguage.googleapis.com/v1beta/openai/
+#   MODEL: gemini-2.5-flash
+name: Review IA
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  review:
+    name: Gemini revisa el PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: anc95/ChatGPT-CodeReview@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USE_GITHUB_MODELS: true
+          MODEL: google/gemini-2.5-flash
+          LANGUAGE: Spanish
+          PROMPT: >
+            Eres un reviewer senior. Revisa este diff de un proyecto de automatizaciones n8n
+            para una zapatería (API FastAPI + flujos n8n). Valida: reglas del negocio,
+            seguridad (nunca deben subirse credenciales ni API keys en los JSON de flujos),
+            errores no manejados y calidad del código. Sé concreto y amable; señala solo
+            problemas reales, no estilos personales.
+          MAX_PATCH_LENGTH: 10000
+          IGNORE_PATTERNS: "*.md,data/**/*"
