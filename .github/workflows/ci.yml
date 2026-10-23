@@ -1,0 +1,103 @@
+# CI: se ejecuta en cada PR hacia develop/main
+# Jobs: pr-title · tests-backend · validar-flujos · gemini-review
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+    types: [opened, reopened, synchronize, ready_for_review, edited]
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+# Un push nuevo al mismo PR cancela la ejecución en curso; los pushes a develop nunca se cancelan entre sí
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  pr-title:
+    name: PR title (Conventional Commits)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|docs|spec|test|ci|chore|refactor|prompt)(\([a-z0-9-]+\))?!?: .+'
+          if [[ "$TITLE" =~ $pattern ]]; then
+            echo "OK: $TITLE"
+          else
+            echo "::error::El título del PR debe seguir Conventional Commits, p. ej. 'feat(f03): añade extracción de avisos'. Recibido: '$TITLE'"
+            exit 1
+          fi
+
+  tests-backend:
+    name: Tests backend (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Instalar dependencias
+        run: pip install -r backend/requirements.txt
+
+      - name: Ejecutar tests
+        working-directory: backend
+        run: python -m pytest -v
+
+  validar-flujos:
+    name: Validar flujos n8n
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar JSONs de flujos/
+        run: python3 scripts/validate_workflows.py flujos
+
+  gemini-review:
+    name: Gemini review
+    needs: [pr-title, validar-flujos]
+    # Corre aunque falle la CI, para poder explicar el fallo
+    if: always() && github.event_name == 'pull_request' && github.event.action != 'edited' && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build diff and CI report
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git diff "$BASE_SHA...$HEAD_SHA" -- . ':(exclude)data/' > pr.diff
+          python3 scripts/validate_workflows.py flujos > ci-report.txt 2>&1 || true
+
+      - name: Ask Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          GEMINI_FALLBACK_MODEL: ${{ vars.GEMINI_FALLBACK_MODEL }}
+          DIFF_FILE: pr.diff
+          CI_REPORT_FILE: ci-report.txt
+          REVIEW_FILE: review.md
+          AGENTS_FILE: AGENTS.md
+        run: python3 scripts/gemini_review.py
+
+      - name: Comment on PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        # --edit-last: actualiza la review anterior en vez de acumular comentarios
+        run: gh pr comment "$PR" --edit-last --body-file review.md || gh pr comment "$PR" --body-file review.md

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "📘 Guía de la app (endpoints y webhooks)"
+    url: "https://github.com/IA-P1-BCN/zapateria-paso-firme-g2/blob/develop/docs/guia-de-la-app.md"
+    about: "Consulta los endpoints de la API y cómo la app avisa a n8n antes de abrir un issue"
+  - name: "📋 Briefing del proyecto"
+    url: "https://github.com/IA-P1-BCN/zapateria-paso-firme-g2/blob/develop/docs/BRIEFING_zapateria.md"
+    about: "Enunciado, reglas del negocio, historias de usuario y niveles de entrega"

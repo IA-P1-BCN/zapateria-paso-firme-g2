@@ -1,0 +1,48 @@
+// SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+//
+// Configuración de OpenCode para este proyecto.
+// - Reglas: AGENTS.md (raíz), lo lee OpenCode solo.
+// - Skills: .opencode/skills/ (GENERADAS por scripts/sync_agents.py desde .claude/skills/, que es la fuente).
+// - Subagentes y comandos: .opencode/agents/ y .opencode/commands/ (GENERADOS por scripts/sync_agents.py).
+// - Modelo: no se fija aquí; cada persona elige su modelo gratuito (OpenCode Zen, OpenRouter :free, Groq, Gemini)
+//   con /models o en su config global. Ver .agents/team.md.
+// Si tu versión de OpenCode no carga este archivo: OPENCODE_CONFIG=.opencode/opencode.jsonc opencode
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "permission": {
+    // Cada edición pide confirmación: OpenCode no permite aquí bloquear backend/ y frontend/ por ruta
+    // de forma tan simple como Claude Code, así que la persona revisa cada cambio.
+    "edit": "ask",
+    "webfetch": "ask",
+    "bash": {
+      "*": "ask",
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "python scripts/sync_agents.py*": "allow",
+      "python scripts/validate_agent_infra.py*": "allow",
+      "python -m json.tool*": "allow",
+      "git push*": "deny",
+      "rm -rf*": "deny"
+    }
+  },
+
+  "mcp": {
+    // n8n-mcp: documentación de nodos y validación de flujos (lo recomienda el enunciado).
+    // Desactivado por defecto. Para usarlo: exporta N8N_API_URL y N8N_API_KEY en tu terminal
+    // (nunca en este archivo) y cambia "enabled" a true SOLO en tu copia local, o actívalo en tu config global.
+    "n8n-mcp": {
+      "type": "local",
+      "command": ["npx", "-y", "n8n-mcp"],
+      "enabled": false,
+      "environment": {
+        "MCP_MODE": "stdio",
+        "LOG_LEVEL": "error",
+        "DISABLE_CONSOLE_OUTPUT": "true",
+        "N8N_API_URL": "{env:N8N_API_URL}",
+        "N8N_API_KEY": "{env:N8N_API_KEY}"
+      }
+    }
+  }
+}
