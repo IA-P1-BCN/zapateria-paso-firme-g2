@@ -371,7 +371,7 @@ El editor visual sigue siendo donde se prueba y se revisa: el agente no sustituy
   - **Ventas del datáfono:** cada noche n8n importa el CSV de cobros con tarjeta y los registra como ventas, sin duplicar las que ya estén
 - Mensajes de recordatorio redactados por IA con un tono cercano, siempre con los importes calculados por el flujo (nunca por el modelo)
 - Webhook de n8n protegido (autenticación por cabecera) y validación de los datos que llegan
-- Datos personales conforme al RGPD: solo los datos necesarios, consentimiento para recibir mensajes y no enviar a modelos externos más datos de los imprescindibles
+- Datos personales conforme al RGPD *(Reglamento General de Protección de Datos)*: solo los datos necesarios, consentimiento para recibir mensajes y no enviar a modelos externos más datos de los imprescindibles
 - Comandos, skills o subagentes personalizados en OpenCode para tareas repetitivas (generar specs, revisar flujos…)
 
 ### 🔴 Nivel Experto
