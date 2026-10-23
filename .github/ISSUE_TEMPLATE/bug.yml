@@ -1,0 +1,53 @@
+name: "🐛 Bug"
+description: "Algo no funciona en un flujo n8n o en la app"
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción del bug
+      description: Qué ocurre y qué debería ocurrir
+    validations:
+      required: true
+  - type: dropdown
+    id: afecta
+    attributes:
+      label: ¿Dónde falla?
+      options:
+        - Flujo n8n
+        - Backend (API)
+        - Frontend
+        - CI / repo
+        - No lo sé
+    validations:
+      required: true
+  - type: input
+    id: flujo
+    attributes:
+      label: Flujo / parte afectada
+      placeholder: "Flujo 3: abonos a distancia"
+  - type: textarea
+    id: repro
+    attributes:
+      label: Pasos para reproducir
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / evidencias
+      description: Error de n8n, respuesta de la API, mensaje del Error Workflow, captura
+      render: shell
+  - type: dropdown
+    id: entorno
+    attributes:
+      label: Entorno
+      options:
+        - Local (docker-compose)
+        - n8n en la nube
+        - No lo sé
