@@ -9,6 +9,7 @@ avisos de error…) y la capa de agentes de IA con la que se construyen.
 - Cómo funciona la app (endpoints, webhook, errores): [`docs/guia-de-la-app.md`](docs/guia-de-la-app.md)
 - Producto y flujos: [`docs/prd-nivel-medio.md`](docs/prd-nivel-medio.md), [`docs/diagramas/`](docs/diagramas/)
 - Cómo colaborar (ramas, commits, PR): [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- Rutina diaria (Daily Scrum, tablero y vistas): [`docs/dailies/README.md`](docs/dailies/README.md)
 - Reglas para agentes de IA: [`AGENTS.md`](AGENTS.md)
 
 ## Arrancar el entorno
