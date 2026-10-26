@@ -60,3 +60,74 @@ Discrepancias detectadas entre el prompt inicial y el repositorio (no son alucin
 
 - Aprobación humana de las specs 000–005 (tareas T-000-01, T-001-01, T-002-01, T-003-01, T-004-01, T-005-01).
 - Aprobar o modificar ADR-0001 y resolver los bloqueos conocidos.
+
+## 2026-10-26 · HU-02 · #11 · Recibo de abono (spec 002 → flujo → PR)
+
+- **Persona responsable:** levifvy
+- **Herramienta y modelo:** Claude Code · Claude Opus 5.5 (`claude-opus-5-5`) como agente principal orquestador
+- **Subagente / comando:** `test-designer` (fixtures) → `flow-builder` (JSON) → `flow-reviewer` + `api-contract-checker` en paralelo (revisión) → `ai-scribe` (esta entrada, T-002-07). No se usó n8n-mcp.
+- **Rama / Spec / PR:** `feature/HU-02-recibo-abono` · `specs/features/002-recibo-abono/` · issue #11 (subissues #30–#36) · [PR #68](https://github.com/IA-P1-BCN/zapateria-paso-firme-g2/pull/68) («Relacionado con #11») · commits `60462f0` (docs: spec aprobada, plan, tasks, fixtures) y `bb68012` (feat: `workflows/002-recibo-abono.json`)
+
+### Prompt clave
+
+> Prompt de orquestación por fases 0–7: auditoría de solo lectura → aprobación humana de la spec → fixtures → JSON → prueba humana → revisión automática → PR → bitácora. Fuentes de verdad ordenadas (constitución > spec > plan > tareas > prompt), archivos permitidos explícitos, paradas obligatorias entre fases y autorización puntual de commit/push/PR como excepción a la regla 4 de `AGENTS.md` (sin merge ni force push).
+
+### Resultado
+
+- Spec 002 de **Borrador** a **Aprobada** (aprueba levifvy, 2026-10-26) con un diff propuesto por el agente y aceptado; plan alineado con ese diff.
+- Fixtures F-002-1…F-002-12: un caso por CA y por borde (2 sintéticos para CA-3).
+- Flujo `[002] Recibo de abono`: Execute Workflow Trigger → `Configuración` → `Formatear importes y fechas` → `¿Tiene correo?` → `¿Liquidado?` → 3 envíos Gmail. `active: false`, sin pinData ni credenciales, Retry On Fail con 2 intentos.
+- `validate_workflows.py --estricto` OK. Prueba humana en n8n local: CA-1…CA-4 OK con fixtures. `flow-reviewer`: APROBADO (0 bloqueantes). `api-contract-checker`: CONTRATO OK. CI de la PR en verde (pytest, validar flujos, título, Gemini review sin problemas).
+- Resultado global: **aceptado con cambios** (spec ampliada antes de construir).
+
+### Errores o alucinaciones
+
+| Qué hizo mal | Causa raíz | Cómo se detectó | Cómo se corrigió |
+|---|---|---|---|
+| `flow-builder` (1.er intento) convirtió el `'\n'` de la expresión del aviso a la tienda en un salto de línea real y rompió la expresión | Escapado al escribir el JSON: doble nivel (JSON + expresión JS) | El propio `flow-builder` al evaluar las expresiones contra las fixtures | Corregido el escapado y revalidado |
+| Contradicción de alcance: `AGENTS.md`, `CLAUDE.md`, constitución y specs llevan `# SCOPE: … NO tocar … workflows`, pero la tarea exigía escribir en `workflows/` | Cabecera heredada de la rama de infraestructura de agentes | El agente principal en la auditoría (Fase 0); paró | El humano confirmó el alcance de la tarea |
+| La spec Borrador citaba «Error Workflow `005`» en vez de `[ERR] Avisos de error` (constitución VIII) y CA-1 decía «cada abono genera un recibo» aunque el liquidado envía aviso de recogida | Spec redactada antes de fijar convenciones (ADR-0002) | Revisión de la Fase 1 | Corregido en la spec antes de aprobarla |
+| Nombre de credencial Gmail inconsistente (`PF · Gmail` en los PRD frente a ADR-0002 sin prefijo `PF ·`) | PRD sin actualizar tras ADR-0002 | Agente principal al preparar el diff de la spec | Elevado al humano, que eligió `Correo tienda` |
+| «2 intentos» (spec) frente a «2 reintentos» (encargo a `test-designer`) | Redacción del encargo del agente principal | `test-designer` lo señaló | Se siguió la spec (Max Tries = 2) |
+| `pytest` no instalado en local: no se ejecutaron los tests del backend en local | Entorno local incompleto | Al intentar ejecutarlos | La PR no toca `backend/`; pasaron en CI |
+| Docker parado durante la auditoría: no se pudo comprobar si `[000]` existía en n8n | Entorno no levantado en la Fase 0 | Auditoría | Se generó 002 sin depender de `[000]` (ver Decisiones) |
+
+### Decisiones
+
+| Propuesta | Decisión | Por qué |
+|---|---|---|
+| Mostrar `forma_pago` en el recibo (requiere llamada a la API) | Rechazada: no se muestra | La HU no lo pide; evita tratar 401/404 y otra credencial (`API tienda`) |
+| Credencial Gmail | Modificada: `Correo tienda`, remitente «Zapatería Paso Firme» | Sin prefijo `PF ·` (ADR-0002) y la misma que propone el plan de 001 |
+| Configuración en `$vars` | Modificada: nodo Set `Configuración` | Por si la instancia no tiene Variables |
+| `tienda_email` | Aceptada: `tienda@pasofirme.example` | Dirección ficticia, sin datos reales |
+| Textos de recibo, recogida y aviso a la tienda propuestos por el agente | Aceptados | Cubren los CA de la spec |
+| Retry On Fail 2 intentos + `[ERR] Avisos de error` | Aceptada | Lo pide la spec y la constitución VIII |
+| Aplicar el diff de la spec también al plan | Aceptada | Mantener plan y spec alineados |
+| Generar 002 sin `[000]` | Aceptada: T-002-03 queda «integración con 000 pendiente» | `[000]` aún no existe ni está decidido cómo pasa `datos` |
+| PR con «Closes #11» | Modificada: «Relacionado con #11» | La HU no se cierra hasta la integración y la prueba E2E |
+| Bitácora tras aprobar la PR (lo que decía el prompt) | Modificada: ahora, en la misma PR #68 | Decisión de levifvy: quien revisa ve la bitácora junto al flujo |
+
+### Trabajo descartado
+
+- Nodo HTTP `GET /api/apartados/{id}` para obtener la forma de pago.
+- `$vars.TIENDA_EMAIL`.
+- Formato con `Intl.NumberFormat` / separador de miles: mejora no bloqueante aplazada (`toFixed(2)` da `1234,50 €`).
+
+### Mi prompt o la spec
+
+- La spec Borrador no tenía textos, ni bordes (email vacío o con espacios, talla nula, decimales, zona horaria), ni el nombre de la credencial.
+- El prompt asumía que el validador podía fallar por JSON ajenos (no ocurrió: solo existe el 002).
+- La cabecera `# SCOPE` contradecía la tarea.
+
+### Lección
+
+Proponer el diff de la spec (textos, bordes, credenciales) antes de aprobarla evitó rehacer el flujo, y evaluar las expresiones del JSON contra las fixtures detecta errores de escapado que el validador estructural no ve.
+
+### Siguientes pasos
+
+- `[000] Enrutador de eventos`: resolver la pregunta abierta en `specs/features/000-*/spec.md:72` (cómo pasa `datos`) e integrar 002 (T-002-03).
+- `[ERR] Avisos de error` (spec 005).
+- Prueba de extremo a extremo con la app.
+- F-002-12: n8n no lanza el Error Workflow en ejecuciones manuales; probarlo en ejecución real.
+- Al importar: asignar la credencial `Correo tienda` y el errorWorkflow.
+- Revisión humana y aprobación de la PR #68 (T-002-06).

@@ -20,4 +20,4 @@
 - [x] T-002-04 · Probado por levifvy el 2026-10-26: CA-1…CA-4 OK con fixtures (E2E con la app pendiente de 000)
 - [x] T-002-05 · flow-reviewer: APROBADO (0 bloqueantes) · api-contract-checker: CONTRATO OK (2026-10-26)
 - [ ] T-002-06
-- [ ] T-002-07
+- [x] T-002-07 · Entrada «2026-10-26 · HU-02 · #11» en `docs/ai-log.md`
