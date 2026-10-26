@@ -1,4 +1,6 @@
 ---
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
+# GENERADO por scripts/sync_agents.py desde .claude/skills/paso-firme-verify/SKILL.md. No editar a mano.
 name: paso-firme-verify
 description: Verifica una entrega de Paso Firme contra su issue, el validador de flujos y los tests del backend, e informa la evidencia real antes de preparar una PR. Úsala para comprobar cambios, diagnosticar verificaciones fallidas o preparar el checklist de la PR.
 ---
@@ -16,9 +18,9 @@ limpio con la ausencia de cambios.
 
 Ejecutar en este orden y reportar el resultado real de cada una:
 
-1. **Flujos n8n**: `python3 scripts/validate_workflows.py flujos`
+1. **Flujos n8n**: `python scripts/validate_workflows.py`
    (estructura y ausencia de credenciales). Un flujo sin exportar a
-   `flujos/` se señala como pendiente, no como aprobado.
+   `workflows/` se señala como pendiente, no como aprobado.
 2. **Tests del backend**: `cd backend && python -m pytest -v`. Informar
    nº de aprobados, fallidos y saltados. Un test saltado no equivale a
    aprobado; no afirmar cobertura si no se midió.

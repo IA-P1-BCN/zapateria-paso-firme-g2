@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 # GENERADO por scripts/sync_agents.py desde .claude/skills/trazabilidad-ia/SKILL.md. No editar a mano.
 name: trazabilidad-ia
 description: Cómo registrar en docs/ai-log.md (bitácora de IA, entregable del proyecto) la herramienta y el modelo usados, los prompts clave, las alucinaciones o errores del agente y las decisiones aceptadas o rechazadas. Úsala al cerrar una tarea hecha con IA, al detectar una alucinación o al comparar modelos.

@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 name: revision-seguridad-flujos
 description: Checklist de revisión de un flujo n8n antes de mergear (credenciales, datos personales y RGPD, webhooks expuestos, reglas de negocio, manejo de errores, convenciones). Úsala al revisar un JSON de flujo, una PR con flujos o al preparar la revisión humana.
 ---
@@ -52,6 +52,6 @@ Salida esperada: **veredicto** (`APROBADO` / `CAMBIOS NECESARIOS`) + lista de ha
 ## Búsqueda rápida de secretos
 
 ```bash
-grep -nEi '"(apiKey|password|token|secret|authorization)"\s*:\s*"[^"{=]' automation/*.json
-grep -nE 'Bearer [A-Za-z0-9._-]{8,}|X-API-Key"?\s*:\s*"[^"{=]' automation/*.json
+grep -nEi '"(apiKey|password|token|secret|authorization)"\s*:\s*"[^"{=]' workflows/*.json
+grep -nE 'Bearer [A-Za-z0-9._-]{8,}|X-API-Key"?\s*:\s*"[^"{=]' workflows/*.json
 ```

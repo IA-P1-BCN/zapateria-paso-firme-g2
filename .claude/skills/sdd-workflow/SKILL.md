@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 name: sdd-workflow
 description: Ciclo Spec-Driven Development del proyecto (spec → plan → tasks → flujo → revisión). Úsala al crear o editar cualquier archivo de specs/, al pasar una feature de estado o cuando alguien pida "hacer la spec", "el plan" o "las tareas" de una historia de usuario.
 ---
@@ -12,7 +12,7 @@ description: Ciclo Spec-Driven Development del proyecto (spec → plan → tasks
 - Proceso y estados: `specs/README.md`.
 - Mapa HU → feature: `specs/backlog.md`.
 - Plantillas: `specs/_templates/{spec,plan,tasks}.md`.
-- Crear carpeta nueva: `python scripts/new_feature.py <NNN> <slug> --hu HU-XX [--titulo "…"]`.
+- Crear carpeta nueva: `python scripts/new_feature.py <NNN> <slug> --hu HU-XX --fl FL-XX [--titulo "…"]`.
 
 ## Gates (no te los saltes)
 

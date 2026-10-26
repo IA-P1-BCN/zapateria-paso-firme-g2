@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 name: dominio-apartados
 description: Reglas del negocio de la zapatería (apartados, abonos, liquidación, vencimiento, vales, formas de pago) y qué calcula la app frente a lo que calcula n8n. Úsala siempre que un flujo, spec o mensaje trate importes, estados de apartado, plazos o identificación de clientes.
 ---
@@ -28,7 +28,7 @@ Modelo completo en `ontology.md`. Esto es la chuleta para decidir rápido.
 |---|---|---|
 | `abonado`, `pendiente`, `estado`, `fecha_limite` | App | Leer y formatear. **Nunca recalcular** |
 | Código e importe del vale | App | Leer |
-| Totales del día / mes por forma de pago | n8n | Sumar ventas y abonos de la API, redondear a 2 decimales |
+| Totales del día / mes por forma de pago | n8n | Sumar ventas y abonos de la API; redondear a 2 decimales solo el total, nunca cada importe (ADR-0002, D6) |
 | Total pendiente de cobro | n8n | Sumar `pendiente` de `GET /api/apartados?estado=activo` |
 | ¿Faltan 7 o 1 días? | n8n | Comparar `fecha_limite` con hoy (zona Europe/Madrid) |
 
