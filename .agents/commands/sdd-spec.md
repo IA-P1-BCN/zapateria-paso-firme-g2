@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 Redacta la spec SDD para: **$ARGUMENTS** (una HU como `HU-03`, un número de feature o una descripción).
 

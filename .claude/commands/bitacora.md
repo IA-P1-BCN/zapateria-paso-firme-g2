@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 # GENERADO por scripts/sync_agents.py desde .agents/commands/bitacora.md. No editar a mano.
 description: Registra en docs/ai-log.md lo hecho con IA (delegando en ai-scribe)
 argument-hint: "<feature, tarea o descripción>"

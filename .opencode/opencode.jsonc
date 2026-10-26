@@ -1,4 +1,4 @@
-// SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+// SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 //
 // Configuración de OpenCode para este proyecto.
 // - Reglas: AGENTS.md (raíz), lo lee OpenCode solo.
@@ -22,6 +22,7 @@
       "git log*": "allow",
       "python scripts/sync_agents.py*": "allow",
       "python scripts/validate_agent_infra.py*": "allow",
+      "python scripts/validate_workflows.py*": "allow",
       "python -m json.tool*": "allow",
       "git push*": "deny",
       "rm -rf*": "deny"

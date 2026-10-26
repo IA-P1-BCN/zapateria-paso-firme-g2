@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 # GENERADO por scripts/sync_agents.py desde .agents/commands/sdd-plan.md. No editar a mano.
 description: Escribe el plan técnico de una feature con spec aprobada y lo valida contra la API
 argument-hint: "<NNN>"

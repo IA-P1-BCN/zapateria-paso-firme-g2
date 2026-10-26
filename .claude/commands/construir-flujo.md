@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 # GENERADO por scripts/sync_agents.py desde .agents/commands/construir-flujo.md. No editar a mano.
 description: Genera el JSON del flujo n8n de una feature (delegando en flow-builder)
 argument-hint: "<NNN> [T-NNN-k]"

@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 # GENERADO por scripts/sync_agents.py desde .agents/commands/sdd-tasks.md. No editar a mano.
 description: Descompone el plan de una feature en tareas atómicas asignables
 argument-hint: "<NNN>"
