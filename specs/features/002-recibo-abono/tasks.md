@@ -14,10 +14,10 @@
 
 ## Seguimiento
 
-- [ ] T-002-01
-- [ ] T-002-02
-- [ ] T-002-03
-- [ ] T-002-04
-- [ ] T-002-05
+- [x] T-002-01 · Spec aprobada por levifvy el 2026-10-26
+- [x] T-002-02 · fixtures.md: F-002-1…F-002-12, cobertura CA-1…CA-4
+- [ ] T-002-03 · JSON generado y validado (`validate_workflows.py --estricto` OK); integración con 000 pendiente
+- [x] T-002-04 · Probado por levifvy el 2026-10-26: CA-1…CA-4 OK con fixtures (E2E con la app pendiente de 000)
+- [x] T-002-05 · flow-reviewer: APROBADO (0 bloqueantes) · api-contract-checker: CONTRATO OK (2026-10-26)
 - [ ] T-002-06
 - [ ] T-002-07
