@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 """Genera subagentes, comandos y skills de Claude Code y OpenCode desde una sola fuente.
 
 Fuente:
@@ -22,7 +22,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCOPE = "# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)"
+SCOPE = "# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)"
+SCOPE_FLOW_BUILDER = "# SCOPE: infraestructura-agentes (NO tocar backend/frontend; workflows/ solo flow-builder)"
+SCOPES = (SCOPE, SCOPE_FLOW_BUILDER)  # ADR-0002, D10
 MARCA = "# GENERADO por scripts/sync_agents.py desde {fuente}. No editar a mano."
 MARCA_MD = "<!-- GENERADO por scripts/sync_agents.py desde {fuente}. No editar a mano. -->"
 SKILLS_FUENTE = ROOT / ".claude" / "skills"
@@ -40,21 +42,22 @@ AGENTS: dict[str, dict] = {
         "description": "Redacta specs SDD (spec.md) de automatizaciones n8n a partir de una historia de usuario. "
                        "Úsalo para crear o actualizar specs/features/NNN-*/spec.md. Nunca aprueba ni construye.",
         "claude": {"tools": "Read, Grep, Glob, Write, Edit",
-                   "skills": "sdd-workflow, dominio-apartados, tienda-api"},
+                   "skills": "sdd-workflow, dominio-apartados, n8n-convenciones, tienda-api"},
         "opencode": ESCRIBE_CON_PERMISO,
     },
     "flow-builder": {
         "description": "Genera el JSON de un flujo n8n desde una feature con spec aprobada, plan y tareas. "
-                       "Úsalo para construir o modificar flujos en automation/. Nunca activa flujos ni escribe secretos.",
+                       "Úsalo para construir o modificar flujos en workflows/. Nunca activa flujos ni escribe secretos.",
         "claude": {"tools": None,
                    "skills": "n8n-convenciones, tienda-api, dominio-apartados, n8n-import-export"},
         "opencode": CONSTRUYE,
+        "scope": SCOPE_FLOW_BUILDER,
     },
     "flow-reviewer": {
         "description": "Revisa (solo lectura) un flujo n8n: secretos, datos personales, reglas de negocio, errores y "
                        "convenciones. Úsalo antes de abrir una PR con flujos. Devuelve veredicto y hallazgos.",
         "claude": {"tools": "Read, Grep, Glob",
-                   "skills": "revision-seguridad-flujos, n8n-convenciones, dominio-apartados"},
+                   "skills": "revision-seguridad-flujos, n8n-convenciones, tienda-api, dominio-apartados"},
         "opencode": SOLO_LECTURA,
     },
     "api-contract-checker": {
@@ -91,6 +94,12 @@ COMMANDS: dict[str, dict] = {
                       "argument_hint": "<NNN | ruta del JSON>"},
     "bitacora": {"description": "Registra en docs/ai-log.md lo hecho con IA (delegando en ai-scribe)",
                  "argument_hint": "<feature, tarea o descripción>"},
+    # Comandos que solo envuelven una skill: en Claude Code la skill ya es el comando /<nombre>,
+    # así que se generan solo para OpenCode (evita dos entradas con el mismo nombre).
+    "paso-firme-review": {"description": "Revisa un diff de Paso Firme contra las reglas de negocio del briefing",
+                          "argument_hint": "<rama | PR | ruta>", "herramientas": ("opencode",)},
+    "paso-firme-verify": {"description": "Verifica la entrega de Paso Firme con evidencia de validador de flujos y tests",
+                          "argument_hint": "<issue | rama>", "herramientas": ("opencode",)},
 }
 
 
@@ -119,15 +128,15 @@ def _yaml(datos: dict, sangria: int = 0) -> list[str]:
 def _cuerpo(ruta: Path) -> str:
     """Contenido de la fuente sin la línea SCOPE inicial (ya va en el frontmatter)."""
     lineas = ruta.read_text(encoding="utf-8").splitlines()
-    if lineas and lineas[0].strip() == SCOPE:
+    if lineas and lineas[0].strip() in SCOPES:
         lineas = lineas[1:]
     while lineas and not lineas[0].strip():
         lineas = lineas[1:]
     return "\n".join(lineas).rstrip() + "\n"
 
 
-def _documento(frontmatter: dict, fuente: str, cuerpo: str) -> str:
-    cabecera = ["---", SCOPE, MARCA.format(fuente=fuente), *_yaml(frontmatter), "---", ""]
+def _documento(frontmatter: dict, fuente: str, cuerpo: str, scope: str = SCOPE) -> str:
+    cabecera = ["---", scope, MARCA.format(fuente=fuente), *_yaml(frontmatter), "---", ""]
     return "\n".join(cabecera) + "\n" + cuerpo
 
 
@@ -159,16 +168,20 @@ def generar() -> dict[Path, str]:
         cuerpo = _cuerpo(ROOT / fuente)
         claude = {"name": nombre, "description": meta["description"],
                   "tools": meta["claude"]["tools"], "model": "inherit", "skills": meta["claude"]["skills"]}
-        salida[ROOT / ".claude" / "agents" / f"{nombre}.md"] = _documento(claude, fuente, cuerpo)
+        scope = meta.get("scope", SCOPE)
+        salida[ROOT / ".claude" / "agents" / f"{nombre}.md"] = _documento(claude, fuente, cuerpo, scope)
         opencode = {"description": meta["description"], "mode": "subagent", "permission": meta["opencode"]}
-        salida[ROOT / ".opencode" / "agents" / f"{nombre}.md"] = _documento(opencode, fuente, cuerpo)
+        salida[ROOT / ".opencode" / "agents" / f"{nombre}.md"] = _documento(opencode, fuente, cuerpo, scope)
     for nombre, meta in COMMANDS.items():
         fuente = f".agents/commands/{nombre}.md"
         cuerpo = _cuerpo(ROOT / fuente)
-        claude = {"description": meta["description"], "argument-hint": meta["argument_hint"]}
-        salida[ROOT / ".claude" / "commands" / f"{nombre}.md"] = _documento(claude, fuente, cuerpo)
-        opencode = {"description": meta["description"]}
-        salida[ROOT / ".opencode" / "commands" / f"{nombre}.md"] = _documento(opencode, fuente, cuerpo)
+        herramientas = meta.get("herramientas", ("claude", "opencode"))
+        if "claude" in herramientas:
+            claude = {"description": meta["description"], "argument-hint": meta["argument_hint"]}
+            salida[ROOT / ".claude" / "commands" / f"{nombre}.md"] = _documento(claude, fuente, cuerpo)
+        if "opencode" in herramientas:
+            opencode = {"description": meta["description"]}
+            salida[ROOT / ".opencode" / "commands" / f"{nombre}.md"] = _documento(opencode, fuente, cuerpo)
     for ruta in _archivos_skills():
         salida[SKILLS_DESTINO / ruta.relative_to(SKILLS_FUENTE)] = _copia_skill(ruta)
     return salida

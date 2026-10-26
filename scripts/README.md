@@ -1,8 +1,8 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # scripts/ · Utilidades de la capa de agentes
 
-Python 3.10+ sin dependencias. No tocan `backend/`, `frontend/` ni `automation/`.
+Python 3.10+ sin dependencias. No escriben en `backend/`, `frontend/` ni `workflows/` (`validate_workflows.py` solo lee los JSON).
 
 | Script | Para qué |
 |---|---|
