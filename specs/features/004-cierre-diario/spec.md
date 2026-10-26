@@ -1,9 +1,10 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 004 · Cierre diario — Spec
 
 - **Estado:** Borrador
 - **HU:** HU-04 · Cierre de caja automático (flujo 5)
+- **Flujo enunciado:** FL-05 · Cierre diario
 - **Nivel:** 🟢 Esencial
 - **Redacta:** <<PENDIENTE>> · **Aprueba:** <<PENDIENTE>>
 - **Fecha:** 2026-10-23
@@ -36,7 +37,7 @@ No depende de los avisos del webhook (pueden perderse).
 | Salida | Destino | Contenido |
 |---|---|---|
 | Registro del cierre | <<PENDIENTE: Google Sheets, hoja «Cierres»>> | Fecha, ventas/abonos/total por `efectivo`, `tarjeta`, `bizum`, total general, nº de movimientos |
-| Resumen | Marisa, <<PENDIENTE: canal>> | Lo mismo, legible |
+| Resumen | Marisa, Gmail (ADR-0002, D12) | Lo mismo, legible |
 
 ## 6. Reglas de negocio aplicables
 
@@ -57,7 +58,7 @@ Métrica «Ventas del día» (`ontology.md` §7). Sumar movimientos es trabajo d
 - [ ] CA-2 Los importes coinciden con los de la app.
 - [ ] CA-3 Si ese día no hubo movimientos, el resumen lo dice en vez de fallar.
 - [ ] CA-4 El cierre queda guardado fuera de la app (la app no guarda cierres).
-- [ ] CA-5 Las sumas se redondean a 2 decimales.
+- [ ] CA-5 Los importes de la app no se redondean; solo cada **total** sumado se redondea a 2 decimales para quitar el error de coma flotante (ADR-0002, D6).
 
 ## 9. Datos personales
 
@@ -69,4 +70,4 @@ Recaudación mensual (feature `008`).
 
 ## 11. Preguntas abiertas
 
-- <<PENDIENTE: hora, destino del histórico, canal>>
+- <<PENDIENTE: hora, destino del histórico>> (canal resuelto: Gmail)

@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 Descompón en tareas la feature **$ARGUMENTS** (número, p. ej. `003`).
 

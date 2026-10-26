@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 # GENERADO por scripts/sync_agents.py desde .claude/skills/n8n-convenciones/SKILL.md. No editar a mano.
 name: n8n-convenciones
 description: Convenciones del equipo para construir flujos n8n (nombres de flujos y nodos, estructura con enrutador y sub-flujos, credenciales, variables, manejo de errores, nodos Code, exportación con active false). Úsala al generar, modificar o revisar el JSON de un flujo o al escribir un plan.md.
@@ -17,7 +17,7 @@ description: Convenciones del equipo para construir flujos n8n (nombres de flujo
 | Flujo de prueba local (no se exporta) | `[TEST] …` | |
 | Nodo de acción | Verbo + objeto, en español | `Pedir apartados activos`, `Enviar recibo al cliente` |
 | Nodo IF / Switch | Pregunta | `¿Liquidado?`, `¿Qué evento es?` |
-| Archivo | `automation/NNN-slug.json` <<PENDIENTE: carpeta>> | `automation/003-abonos-a-distancia.json` |
+| Archivo | `workflows/NNN-slug.json` (3 dígitos = nº de spec) | `workflows/003-abonos-a-distancia.json` |
 
 ## Estructura
 

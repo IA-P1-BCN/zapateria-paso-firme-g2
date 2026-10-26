@@ -1,9 +1,10 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 000 · Enrutador de eventos — Spec
 
 - **Estado:** Borrador
 - **HU:** requisito del nivel esencial («un único webhook que reparta los eventos con un nodo Switch según el campo `evento`»)
+- **Flujo enunciado:** —
 - **Nivel:** 🟢 Esencial
 - **Redacta:** <<PENDIENTE>> · **Aprueba:** <<PENDIENTE>>
 - **Fecha:** 2026-10-23

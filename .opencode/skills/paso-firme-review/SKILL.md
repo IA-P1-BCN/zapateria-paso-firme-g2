@@ -1,4 +1,6 @@
 ---
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
+# GENERADO por scripts/sync_agents.py desde .claude/skills/paso-firme-review/SKILL.md. No editar a mano.
 name: paso-firme-review
 description: Revisa un diff de Paso Firme frente a las reglas de negocio del briefing (IA extrae y el flujo decide, importes solo desde la app, credenciales solo en n8n, webhook correcto) y devuelve hallazgos concretos con archivo, impacto y comprobación sugerida. Úsala antes del push, antes de la revisión humana o cuando se solicite revisar una PR.
 ---
@@ -20,11 +22,13 @@ cuando formen parte del alcance.
 2. **Los importes los da la app.** `abonado`, `pendiente`, importes de vales
    y totales vienen de la API. Nunca se recalculan en n8n, en una plantilla
    ni en un modelo. Sumas del cierre diario y del informe mensual: nodo Code
-   sobre los movimientos que devuelve la API, sin inventar ni redondear.
+   sobre los movimientos que devuelve la API, sin inventar importes y sin
+   redondear cada sumando; solo el **total** se redondea a 2 decimales para
+   quitar el error de coma flotante (ADR-0002, D6).
 3. **Credenciales solo en n8n.** Ninguna clave, token ni contraseña en JSON,
    código ni repo. Los nodos referencian credenciales por nombre (`API
-   Paso Firme`, Header Auth `X-API-Key`). Los JSON exportados se revisan
-   con `python3 scripts/validate_workflows.py flujos`.
+   tienda`, Header Auth `X-API-Key`). Los JSON exportados se revisan
+   con `python scripts/validate_workflows.py`.
 4. **Sin datos personales reales** en el repo ni en el pinned data; solo los
    ejemplos de la app (`@example.com`).
 5. **Pruebas como contrato.** Si una prueba falla, se arregla el flujo; nunca
@@ -35,7 +39,7 @@ cuando formen parte del alcance.
 - Webhook de la app: se lee `{{ $json.body.evento }}` y
   `{{ $json.body.datos... }}` (no `$json.evento`).
 - Dentro de n8n la app es `http://tienda:8000`; `localhost` solo desde el
-  navegador. Nombres de ficheros: `flujos/NN-nombre-del-flujo.json`.
+  navegador. Nombres de ficheros: `workflows/NNN-slug.json`.
 - Nodos Code en JavaScript corto y comentado; sin llamadas HTTP (para eso
   está HTTP Request). Salida de IA con Structured Output Parser; al modelo
   solo asunto y cuerpo del correo (RGPD), nunca datos de la app.

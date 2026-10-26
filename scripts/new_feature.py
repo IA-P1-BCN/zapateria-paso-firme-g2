@@ -1,8 +1,8 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 """Crea la carpeta de una feature SDD desde las plantillas de specs/_templates/.
 
 Uso:
-  python scripts/new_feature.py 006 venta-grande --hu HU-09 --titulo "Venta grande"
+  python scripts/new_feature.py 006 venta-grande --hu HU-09 --fl FL-04 --titulo "Venta grande"
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ def main() -> int:
     parser.add_argument("id", help="número de 3 dígitos, p. ej. 006")
     parser.add_argument("slug", help="nombre corto en kebab-case, p. ej. venta-grande")
     parser.add_argument("--hu", default="<<PENDIENTE: HU>>", help="historia de usuario, p. ej. HU-09")
+    parser.add_argument("--fl", default="<<PENDIENTE: FL-XX>>", help="flujo del enunciado, p. ej. FL-04 (o —)")
     parser.add_argument("--titulo", help="título legible (por defecto, el slug)")
     args = parser.parse_args()
 
@@ -43,6 +44,7 @@ def main() -> int:
         "{{ID}}": args.id,
         "{{SLUG}}": args.slug,
         "{{HU}}": args.hu,
+        "{{FL}}": args.fl,
         "{{TITULO}}": args.titulo or args.slug.replace("-", " ").capitalize(),
         "{{FECHA}}": date.today().isoformat(),
     }

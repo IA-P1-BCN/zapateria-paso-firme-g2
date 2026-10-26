@@ -1,9 +1,10 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 001 · Confirmación de apartado — Spec
 
 - **Estado:** Borrador
 - **HU:** HU-01 · Confirmación al apartar (flujo 1)
+- **Flujo enunciado:** FL-01 · Confirmación de apartado
 - **Nivel:** 🟢 Esencial
 - **Redacta:** <<PENDIENTE>> · **Aprueba:** <<PENDIENTE>>
 - **Fecha:** 2026-10-23
@@ -40,7 +41,7 @@ Que el cliente reciba al momento un resumen de lo que ha apartado, lo pagado, lo
 | Salida | Destinatario | Canal | Contenido |
 |---|---|---|---|
 | Confirmación | Cliente | <<PENDIENTE: correo (Gmail/SMTP) o Telegram>> | Nº apartado, producto, talla, precio, abonado, pendiente, fecha límite |
-| Aviso de no envío | Tienda (Marisa) | <<PENDIENTE: canal de la tienda>> | «No se pudo enviar la confirmación del apartado #id: el cliente no tiene correo» |
+| Aviso de no envío | Tienda (Marisa) | Gmail (ADR-0002, D12) | «No se pudo enviar la confirmación del apartado #id: el cliente no tiene correo» |
 
 ## 6. Reglas de negocio aplicables
 
@@ -72,5 +73,5 @@ Redacción del mensaje con IA (nivel avanzado).
 
 ## 11. Preguntas abiertas
 
-- <<PENDIENTE: canal de mensajes al cliente y a la tienda>>
+- ~~Canal de mensajes~~ → resuelto: **Gmail** para cliente y tienda (`docs/prd-nivel-medio.md` §1; ADR-0002, D12).
 - <<PENDIENTE: remitente y asunto del correo>>

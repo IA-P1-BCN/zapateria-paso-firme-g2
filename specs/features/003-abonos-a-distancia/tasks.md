@@ -1,10 +1,10 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 003 · Abonos a distancia — Tareas
 
 | ID | Tarea | Tipo | Agente sugerido | Responsable | Depende de | Hecho cuando |
 |---|---|---|---|---|---|---|
-| T-003-01 | Resolver preguntas abiertas (transferencia, canal, duplicados) y aprobar la spec | humano | — | <<PENDIENTE>> | — | `Estado: Aprobada` |
+| T-003-01 | Resolver preguntas abiertas (duplicados, respuesta de Marisa) y aprobar la spec | humano | — | <<PENDIENTE>> | — | `Estado: Aprobada` |
 | T-003-02 | Verificar los 9 casos esperados contra los datos de ejemplo de la app | agente | `test-designer` | <<PENDIENTE>> | 01 | Tabla de `fixtures.md` confirmada |
 | T-003-03 | Diseñar prompt y esquema de extracción (solo extrae) | agente | `flow-builder` | <<PENDIENTE>> | 01 | Prompt en el plan; esquema JSON fijo |
 | T-003-04 | Code «Buscar candidatos» con normalización de nombres | agente | `flow-builder` | <<PENDIENTE>> | 02 | Pasa los 9 casos en pinned data |

@@ -1,9 +1,9 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # {{ID}} · {{TITULO}} — Plan
 
 - **Spec:** `spec.md` (debe estar `Aprobada`)
-- **Flujo n8n:** `[{{ID}}] {{TITULO}}` → `automation/{{ID}}-{{SLUG}}.json` <<PENDIENTE: confirmar carpeta>>
+- **Flujo n8n:** `[{{ID}}] {{TITULO}}` → `workflows/{{ID}}-{{SLUG}}.json`
 - **Fecha:** {{FECHA}}
 
 ## 1. Diseño del flujo

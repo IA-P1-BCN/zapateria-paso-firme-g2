@@ -59,8 +59,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validar JSONs de flujos/
-        run: python3 scripts/validate_workflows.py flujos
+      - name: Validar JSONs de workflows/
+        run: python3 scripts/validate_workflows.py workflows
 
   gemini-review:
     name: Gemini review
@@ -82,7 +82,7 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           git diff "$BASE_SHA...$HEAD_SHA" -- . ':(exclude)data/' > pr.diff
-          python3 scripts/validate_workflows.py flujos > ci-report.txt 2>&1 || true
+          python3 scripts/validate_workflows.py workflows > ci-report.txt 2>&1 || true
 
       - name: Ask Gemini
         env:
@@ -101,3 +101,24 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
         # --edit-last: actualiza la review anterior en vez de acumular comentarios
         run: gh pr comment "$PR" --edit-last --body-file review.md || gh pr comment "$PR" --body-file review.md
+
+  # ---------------------------------------------------------------------------------------------
+  # PENDIENTE DE CONSENSUAR CON EL EQUIPO (ADR-0002) · preparado y comentado para no romper la CI.
+  # Valida la capa de agentes y que los flujos se suben desactivados y con nombre NNN-slug.json.
+  # Usa `python` (no `python3`) con actions/setup-python, como el resto de la capa de agentes (D11).
+  # Para activarlo: descomentar y añadir "infra-agentes" a `needs` de gemini-review si se quiere.
+  # ---------------------------------------------------------------------------------------------
+  # infra-agentes:
+  #   name: Capa de agentes
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: "3.12"
+  #     - name: Subagentes, comandos y skills sincronizados
+  #       run: python scripts/sync_agents.py --check
+  #     - name: Validar la capa de agentes
+  #       run: python scripts/validate_agent_infra.py
+  #     - name: Flujos con "active": false y nombre NNN-slug.json
+  #       run: python scripts/validate_workflows.py workflows --estricto

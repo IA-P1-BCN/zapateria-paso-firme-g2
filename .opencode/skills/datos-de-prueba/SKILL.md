@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 # GENERADO por scripts/sync_agents.py desde .claude/skills/datos-de-prueba/SKILL.md. No editar a mano.
 name: datos-de-prueba
 description: Cómo diseñar y usar datos de prueba para los flujos (fixtures.md, pinned data, payloads del webhook, correos del banco de data/correos, reinicio de datos de ejemplo, curl contra la Test URL). Úsala al escribir fixtures, preparar pruebas de un flujo o reproducir un fallo.

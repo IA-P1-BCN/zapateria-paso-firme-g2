@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 # GENERADO por scripts/sync_agents.py desde .agents/commands/sdd-spec.md. No editar a mano.
 description: Redacta la spec SDD de una historia de usuario (delegando en spec-writer)
 ---

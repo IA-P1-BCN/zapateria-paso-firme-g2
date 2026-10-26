@@ -1,12 +1,14 @@
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 """Validate exported n8n workflow JSONs.
 
-Usage: python3 scripts/validate_workflows.py <directory>
+Usage: python scripts/validate_workflows.py [directory] [--estricto]   (default: workflows)
 
 Checks per file:
   - valid JSON
   - top-level structure: nodes (list), connections (object), name (string)
   - every node has name, type, typeVersion, position
   - no obvious credentials leaked inside the JSON (API keys, tokens, secrets)
+  --estricto (ADR-0002): also "active": false and file name NNN-slug.json
 """
 
 import json
@@ -25,7 +27,10 @@ LEAK_PATTERNS = [
 ]
 
 
-def validate(path: Path) -> list[str]:
+NOMBRE_ARCHIVO = re.compile(r"^\d{3}-[a-z0-9]+(-[a-z0-9]+)*\.json$")
+
+
+def validate(path: Path, estricto: bool = False) -> list[str]:
     errors: list[str] = []
     try:
         raw = path.read_text(encoding="utf-8")
@@ -60,15 +65,25 @@ def validate(path: Path) -> list[str]:
         if match:
             errors.append(f"posible credencial en el JSON: …{match.group(0)[:40]}…")
 
+    if estricto:
+        if data.get("active") is not False:
+            errors.append('"active" debe ser false: los flujos se exportan desactivados (AGENTS.md, regla 3)')
+        if not NOMBRE_ARCHIVO.match(path.name):
+            errors.append("el archivo debe llamarse NNN-slug.json con el número de 3 dígitos de su spec (ADR-0002)")
+
     return errors
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print("Uso: python3 scripts/validate_workflows.py <directory>")
+    if hasattr(sys.stdout, "reconfigure"):  # consola de Windows
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    args = [a for a in sys.argv[1:] if a != "--estricto"]
+    estricto = "--estricto" in sys.argv[1:]
+    if len(args) > 1:
+        print("Uso: python scripts/validate_workflows.py [carpeta] [--estricto]   (por defecto: workflows)")
         return 2
 
-    directory = Path(sys.argv[1])
+    directory = Path(args[0] if args else "workflows")
     if not directory.is_dir():
         print(f"Sin carpeta {directory}/ todavía, nada que validar")
         return 0
@@ -80,7 +95,7 @@ def main() -> int:
 
     failed = 0
     for path in files:
-        errors = validate(path)
+        errors = validate(path, estricto)
         if errors:
             failed += 1
             print(f"ERROR {path}")

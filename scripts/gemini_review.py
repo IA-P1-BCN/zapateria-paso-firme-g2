@@ -1,3 +1,4 @@
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 """Ask Gemini to review a pull request diff against the project rules.
 
 Reads (env vars):
@@ -34,8 +35,8 @@ Focus, in this order:
    (abonado, pendiente, vale) must come from the app, never recalculated in n8n or templates.
 3. Correctness: webhook data read from $json.body..., app called at http://tienda:8000 inside
    n8n (never localhost), error handling (Error Workflow, error outputs, retries).
-4. Conventions: backend is Python/FastAPI with pytest; n8n flow JSONs live in flujos/ as
-   NN-nombre-del-flujo.json; commits and PR titles follow Conventional Commits.
+4. Conventions: backend is Python/FastAPI with pytest; n8n flow JSONs live in workflows/ as
+   NNN-slug.json (3-digit spec number, see ADR-0002); commits and PR titles follow Conventional Commits.
 5. If a CI report is attached, explain likely causes of failures and the minimal fix.
 
 Do not invent n8n nodes or parameters. If unsure, say so.

@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # ADR-0001 · Estructura de la capa de agentes
 

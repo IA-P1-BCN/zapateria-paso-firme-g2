@@ -3,18 +3,12 @@
   "permissions": {
     "deny": [
       "Edit(./backend/**)",
-      "Write(./backend/**)",
       "Edit(./frontend/**)",
-      "Write(./frontend/**)",
       "Edit(./data/**)",
-      "Write(./data/**)",
       "Read(./.env)"
     ],
     "ask": [
-      "Edit(./automation/**)",
-      "Write(./automation/**)",
       "Edit(./workflows/**)",
-      "Write(./workflows/**)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git merge:*)",
@@ -28,6 +22,7 @@
       "Bash(python scripts/sync_agents.py:*)",
       "Bash(python scripts/validate_agent_infra.py:*)",
       "Bash(python scripts/new_feature.py:*)",
+      "Bash(python scripts/validate_workflows.py:*)",
       "Bash(python -m json.tool:*)"
     ]
   }

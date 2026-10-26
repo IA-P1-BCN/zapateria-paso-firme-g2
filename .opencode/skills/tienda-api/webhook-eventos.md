@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 <!-- GENERADO por scripts/sync_agents.py desde .claude/skills/tienda-api/webhook-eventos.md. No editar a mano. -->
 
 # Eventos del webhook

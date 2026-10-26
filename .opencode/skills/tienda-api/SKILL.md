@@ -1,5 +1,5 @@
 ---
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 # GENERADO por scripts/sync_agents.py desde .claude/skills/tienda-api/SKILL.md. No editar a mano.
 name: tienda-api
 description: Contrato de la API REST de la tienda (endpoints, parámetros, cuerpos, respuestas, errores 401/404/422) y de los eventos del webhook hacia n8n. Úsala al diseñar o revisar cualquier nodo HTTP Request, Webhook o Switch de eventos, o al escribir fixtures con payloads.

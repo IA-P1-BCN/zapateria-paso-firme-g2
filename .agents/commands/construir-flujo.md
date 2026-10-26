@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 Construye el flujo n8n de la feature **$ARGUMENTS** (número, y opcionalmente el id de tarea: `003 T-003-04`).
 

@@ -1,9 +1,9 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 000 · Enrutador de eventos — Plan
 
 - **Estado del plan:** Borrador (no se construye hasta que la spec esté `Aprobada`)
-- **Flujo n8n:** `[000] Enrutador de eventos` → `automation/000-enrutador-eventos.json` <<PENDIENTE: confirmar carpeta>>
+- **Flujo n8n:** `[000] Enrutador de eventos` → `workflows/000-enrutador-eventos.json`
 
 ## 1. Diseño del flujo
 

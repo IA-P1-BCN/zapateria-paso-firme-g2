@@ -1,9 +1,9 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 002 · Recibo de abono — Plan
 
 - **Estado del plan:** Borrador (no se construye hasta que la spec esté `Aprobada`)
-- **Flujo n8n:** `[002] Recibo de abono` → `automation/002-recibo-abono.json` <<PENDIENTE: confirmar carpeta>>
+- **Flujo n8n:** `[002] Recibo de abono` → `workflows/002-recibo-abono.json`
 
 ## 1. Diseño del flujo
 
@@ -13,11 +13,11 @@
 | 2 | `Formatear importes y fechas` | Set | Formato español, sin cambiar valores |
 | 3 | `¿Tiene correo?` | IF | |
 | 4 | `¿Liquidado?` | IF (`estado` = `liquidado`) | |
-| 5a | `Enviar recibo al cliente` | <<PENDIENTE: canal>> | |
-| 5b | `Enviar aviso de recogida` | <<PENDIENTE: canal>> | |
-| 5c | `Avisar a la tienda: sin correo` | <<PENDIENTE: canal tienda>> | |
+| 5a | `Enviar recibo al cliente` | Gmail (Send) | |
+| 5b | `Enviar aviso de recogida` | Gmail (Send) | |
+| 5c | `Avisar a la tienda: sin correo` | Gmail (Send) | |
 
-Si se decide mostrar la forma de pago: nodo `Pedir apartado a la API` (HTTP Request `GET http://tienda:8000/api/apartados/{{id}}`, credencial Header Auth) antes del paso 2.
+Si se decide mostrar la forma de pago: nodo `Pedir apartado a la API` (HTTP Request `GET http://tienda:8000/api/apartados/{{id}}`, credencial `API tienda`) antes del paso 2.
 
 ## 2. Llamadas a la API de la tienda
 
@@ -29,7 +29,7 @@ Si se decide mostrar la forma de pago: nodo `Pedir apartado a la API` (HTTP Requ
 
 | Nombre en n8n | Tipo | Para qué |
 |---|---|---|
-| `API tienda` <<PENDIENTE: nombre acordado>> | Header Auth (`X-API-Key`) | Solo si se llama a la API |
+| `API tienda` (ADR-0002, D5) | Header Auth (`X-API-Key`) | Solo si se llama a la API |
 | <<PENDIENTE>> | Correo / Telegram | Envíos |
 
 ## 4. Manejo de errores

@@ -48,7 +48,7 @@ body:
       label: Recordatorio DoD (cuando la tarea lleva flujo o código)
       description: La checklist completa vive en la plantilla de PR y en CONTRIBUTING.md.
       options:
-        - label: JSON en `flujos/` sin credenciales ni datos personales
+        - label: JSON en `workflows/` sin credenciales ni datos personales
         - label: Probado con datos de ejemplo
         - label: Importes solo desde la app (sin recalcular)
         - label: Tests pasando en local

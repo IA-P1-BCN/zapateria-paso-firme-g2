@@ -1,9 +1,9 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 004 · Cierre diario — Plan
 
 - **Estado del plan:** Borrador (no se construye hasta que la spec esté `Aprobada`)
-- **Flujo n8n:** `[004] Cierre diario` → `automation/004-cierre-diario.json` <<PENDIENTE: confirmar carpeta>>
+- **Flujo n8n:** `[004] Cierre diario` → `workflows/004-cierre-diario.json`
 
 
 ## 1. Diseño del flujo
@@ -14,9 +14,9 @@
 | 2 | `Fecha de hoy` | Set | `{{ $now.toFormat('yyyy-MM-dd') }}` |
 | 3 | `Pedir ventas del día` | HTTP Request GET `/api/ventas` (`desde`, `hasta`) · Always Output Data | |
 | 4 | `Pedir abonos del día` | HTTP Request GET `/api/abonos` (`desde`, `hasta`) · Always Output Data | |
-| 5 | `Sumar por forma de pago` | Code | Totales por `efectivo`/`tarjeta`/`bizum` para ventas y abonos, total general, recuento; redondeo a 2 decimales; maneja listas vacías |
+| 5 | `Sumar por forma de pago` | Code | Totales por `efectivo`/`tarjeta`/`bizum` para ventas y abonos, total general, recuento; redondeo a 2 decimales **solo del total** (`Math.round(total * 100) / 100`), nunca de cada importe (ADR-0002, D6); maneja listas vacías |
 | 6 | `Guardar cierre` | <<PENDIENTE: Google Sheets append/update>> | |
-| 7 | `Enviar resumen a Marisa` | <<PENDIENTE: canal>> | Texto distinto si no hubo movimientos |
+| 7 | `Enviar resumen a Marisa` | Gmail (Send) | Texto distinto si no hubo movimientos |
 
 ## 2. Llamadas a la API de la tienda
 
@@ -29,7 +29,7 @@
 
 | Nombre en n8n | Tipo | Para qué |
 |---|---|---|
-| `API tienda` <<PENDIENTE>> | Header Auth | API |
+| `API tienda` (ADR-0002, D5) | Header Auth | API |
 | <<PENDIENTE>> | Google Sheets OAuth2 | Histórico |
 | <<PENDIENTE>> | Correo / Telegram | Resumen |
 

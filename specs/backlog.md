@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # Backlog · HU del enunciado → features
 
@@ -8,14 +8,14 @@ Responsables: `<<PENDIENTE: asignar en el Kanban>>`.
 | Feature | HU | Flujo del enunciado | Nivel | Estado |
 |---|---|---|---|---|
 | `000-enrutador-eventos` | (requisito esencial: webhook único + Switch) | — | 🟢 Esencial | Borrador |
-| `001-confirmacion-apartado` | HU-01 | 1 · Confirmación de apartado | 🟢 Esencial | Borrador |
-| `002-recibo-abono` | HU-02 | 2 · Recibo de abono | 🟢 Esencial | Borrador |
-| `003-abonos-a-distancia` | HU-03 | 3 · Abonos a distancia | 🟢 Esencial | Borrador |
-| `004-cierre-diario` | HU-04 | 5 · Cierre diario | 🟢 Esencial | Borrador |
-| `005-error-workflow` | HU-05 | 8 · Error Workflow | 🟢 Esencial | Borrador |
-| `006-venta-grande` | HU-09 | 4 · Venta grande | 🟡 Medio | Sin spec |
-| `007-recordatorios-vencimientos` | HU-06, HU-07 | 6 · Recordatorios y vencimientos | 🟡 Medio | Sin spec |
-| `008-informe-mensual` | HU-08 | 7 · Informe mensual | 🟡 Medio | Sin spec |
+| `001-confirmacion-apartado` | HU-01 | FL-01 · Confirmación de apartado | 🟢 Esencial | Borrador |
+| `002-recibo-abono` | HU-02 | FL-02 · Recibo de abono | 🟢 Esencial | Borrador |
+| `003-abonos-a-distancia` | HU-03 | FL-03 · Abonos a distancia | 🟢 Esencial | Borrador |
+| `004-cierre-diario` | HU-04 | FL-05 · Cierre diario | 🟢 Esencial | Borrador |
+| `005-error-workflow` | HU-05 | FL-08 · Error Workflow | 🟢 Esencial | Borrador |
+| `006-venta-grande` | HU-09 | FL-04 · Venta grande | 🟡 Medio | Sin spec |
+| `007-recordatorios-vencimientos` | HU-06, HU-07 | FL-06 · Recordatorios y vencimientos | 🟡 Medio | Sin spec |
+| `008-informe-mensual` | HU-08 | FL-07 · Informe mensual | 🟡 Medio | Sin spec |
 | `009-migracion-excel` | HU-10 | Migración | 🟡 Medio | Sin spec |
 | `010-sub-buscar-apartado` | (sub-workflow reutilizable) | — | 🟡 Medio | Sin spec |
 | `011-sub-enviar-notificacion` | (sub-workflow reutilizable) | — | 🟡 Medio | Sin spec |
@@ -34,4 +34,3 @@ Responsables: `<<PENDIENTE: asignar en el Kanban>>`.
 | La app envía el webhook sin cabecera de autenticación | 000, 015 | `backend/services/n8n.py` solo manda `Content-Type`; proteger el webhook (HU-14) exigiría tocar el backend |
 | No hay endpoint para marcar un vale como usado | 007 | La tabla `vales` tiene `usado`, pero no hay ruta |
 | No hay registro de consentimiento ni de recordatorios enviados | 007, 015 | La app no los guarda; hay que guardarlos en n8n / Google Sheets |
-| Carpeta de los flujos: `automation/` o `workflows/` | todas | El enunciado pide `workflows/` |

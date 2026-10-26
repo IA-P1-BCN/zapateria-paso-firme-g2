@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 Registra en la bitácora de IA lo hecho en: **$ARGUMENTS** (feature, tarea o descripción breve).
 
