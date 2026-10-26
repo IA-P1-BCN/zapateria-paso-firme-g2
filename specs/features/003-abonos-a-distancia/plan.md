@@ -1,26 +1,26 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 003 · Abonos a distancia — Plan
 
 - **Estado del plan:** Borrador (no se construye hasta que la spec esté `Aprobada`)
-- **Flujo n8n:** `[003] Abonos a distancia` → `automation/003-abonos-a-distancia.json` <<PENDIENTE: confirmar carpeta>>
+- **Flujo n8n:** `[003] Abonos a distancia` → `workflows/003-abonos-a-distancia.json`
 
 ## 1. Diseño del flujo
 
 | # | Nodo | Tipo n8n | Qué hace |
 |---|---|---|---|
-| 1 | `Recibir correo del banco` | <<PENDIENTE: Gmail Trigger / IMAP>> (+ Form Trigger en desarrollo) | |
+| 1 | `Recibir correo del banco` | Gmail Trigger (+ Form Trigger en desarrollo) | |
 | 2 | `Extraer datos del pago (IA)` | Basic LLM Chain / Information Extractor con salida estructurada | Devuelve `{es_pago, tipo, ordenante, importe, concepto}`. Solo extrae |
 | 3 | `Validar extracción` | Code | `importe` número > 0, `es_pago` booleano; si no → dudoso |
 | 4 | `¿Es un pago?` | IF | No → fin (ignorar) |
-| 5 | `Pedir apartados activos` | HTTP Request `GET http://tienda:8000/api/apartados?estado=activo` | Credencial Header Auth |
+| 5 | `Pedir apartados activos` | HTTP Request `GET http://tienda:8000/api/apartados?estado=activo` | Credencial `API tienda` (Header Auth) |
 | 6 | `Buscar candidatos` | Code | 1) nº en el concepto (`apartado 2`, `#2`) → ese id; 2) si no, nombre normalizado (sin tildes, mayúsculas, por palabras) contra `cliente`. Devuelve `candidatos[]` y `motivo` |
 | 7 | `¿Cuántos candidatos?` | Switch | 0 → desconocido · 1 → seguir · >1 → dudoso. Ordenante con solo apellido+inicial y sin concepto → dudoso |
 | 8 | `¿Se puede abonar?` | IF | Comprobación previa con datos de la app: `importe ≤ pendiente` y hoy ≤ `fecha_limite`. No sustituye a la app: es para dar un motivo claro |
-| 9 | `¿Es transferencia?` | IF | Hasta decidir la forma de pago → preguntar a Marisa |
+| 9 | `¿Es transferencia?` | IF | Sí → se registra igualmente como `bizum` y se marca `origen: transferencia` para avisar a Marisa (ADR-0002, D12) |
 | 10 | `Registrar abono en la app` | HTTP Request `POST /api/apartados/{id}/abonos` `{importe, forma_pago: "bizum"}` · On Error → Continue (error output) | |
-| 11 | `Preguntar a Marisa` | <<PENDIENTE: canal>> | Ordenante, importe, concepto, candidatos y motivo |
-| 12 | `Avisar a Marisa: no se pudo registrar` | <<PENDIENTE: canal>> | `detail` del 422 o motivo de la comprobación previa |
+| 11 | `Preguntar a Marisa` | Gmail (Send) | Ordenante, importe, concepto, candidatos y motivo |
+| 12 | `Avisar a Marisa: no se pudo registrar` | Gmail (Send) | `detail` del 422 o motivo de la comprobación previa |
 
 ## 2. Llamadas a la API de la tienda
 
@@ -33,7 +33,7 @@
 
 | Nombre en n8n | Tipo | Para qué |
 |---|---|---|
-| `API tienda` <<PENDIENTE>> | Header Auth | API |
+| `API tienda` (ADR-0002, D5) | Header Auth | API |
 | <<PENDIENTE>> | Gmail OAuth2 / IMAP | Leer el buzón |
 | <<PENDIENTE>> | Credencial del proveedor de IA gratuito | Extracción |
 | <<PENDIENTE>> | Correo / Telegram | Avisos a Marisa |

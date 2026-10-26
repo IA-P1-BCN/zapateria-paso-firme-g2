@@ -51,7 +51,8 @@ Tipos: `feat`, `fix`, `docs`, `test`, `refactor`, `ci`, `chore`.
 ## 🤖 Flujos de n8n
 
 - Cada flujo se exporta desde n8n (**Workflow → Export** en formato JSON) y se guarda en
-  [`flujos/`](flujos/) con el número y nombre del flujo, p. ej. `01-confirmacion-apartado.json`.
+  [`workflows/`](workflows/) con el número de 3 dígitos de su spec y un slug, p. ej. `001-confirmacion-apartado.json`
+  (ver [ADR-0002](.agents/decisions/ADR-0002-convenciones-flujos.md)).
 - **Antes de subir, revisa el JSON**: no puede contener credenciales, API keys, correos reales
   ni IDs personales de n8n. La CI valida que el JSON sea correcto, pero el contenido lo revisáis vosotros.
 - El PR debe decir en qué flujo del briefing está basado y qué HU cierra.
@@ -70,7 +71,7 @@ La CI se ejecuta en cada PR contra `develop` y debe estar en verde antes del mer
 
 ## 🧠 Trabajo con agentes de IA
 
-Usad agentes de IA para diseñar y depolar flujos, pero recordad (del briefing): *el agente
+Usad agentes de IA para diseñar y depurar flujos, pero recordad (del briefing): *el agente
 propone, la responsabilidad de los flujos es vuestra*. Todo lo que genere un agente pasa por
 review humana igual que cualquier PR — y el review automático de IA en el PR es una ayuda extra,
 no un sello de calidad.

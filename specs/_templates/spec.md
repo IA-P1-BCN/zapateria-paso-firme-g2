@@ -1,9 +1,10 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # {{ID}} · {{TITULO}} — Spec
 
 - **Estado:** Borrador
 - **HU:** {{HU}}
+- **Flujo enunciado:** {{FL}}
 - **Nivel:** <<PENDIENTE: Esencial | Medio | Avanzado | Experto>>
 - **Redacta:** <<PENDIENTE>> · **Aprueba:** <<PENDIENTE: otra persona del equipo>>
 - **Fecha:** {{FECHA}}

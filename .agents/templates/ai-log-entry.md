@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 <!-- Plantilla de entrada para docs/ai-log.md. Copiar debajo de la última entrada. -->
 

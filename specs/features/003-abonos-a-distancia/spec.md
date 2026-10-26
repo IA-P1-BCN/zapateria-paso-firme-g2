@@ -1,9 +1,10 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 003 · Abonos a distancia (Bizum / transferencia) — Spec
 
 - **Estado:** Borrador
 - **HU:** HU-03 · Abonos por Bizum o transferencia sin apuntar nada a mano (flujo 3)
+- **Flujo enunciado:** FL-03 · Abonos a distancia
 - **Nivel:** 🟢 Esencial
 - **Redacta:** <<PENDIENTE>> · **Aprueba:** <<PENDIENTE>>
 - **Fecha:** 2026-10-23
@@ -20,7 +21,7 @@ Registrar solos los pagos que llegan por Bizum o transferencia en el apartado co
 
 | Tipo | Detalle |
 |---|---|
-| Correo nuevo | <<PENDIENTE: Gmail Trigger o IMAP Email Trigger, buzón de la tienda>> |
+| Correo nuevo | Gmail Trigger sobre el buzón de la tienda (canal único Gmail, ADR-0002 D12) |
 | Formulario (solo desarrollo) | Form Trigger con asunto y cuerpo, para probar sin correo |
 
 ## 4. Entradas
@@ -51,7 +52,7 @@ R-05, R-06, R-07, R-08. Constitución **II** (la IA solo extrae), I, IX.
 |---|---|
 | El concepto trae nº de apartado («apartado 2») | Manda el nº, aunque el ordenante esté abreviado; se comprueba que el nombre no contradice |
 | Nombre con más apellidos o sin tildes («CARMEN RUIZ GARCIA», «LUCIA GOMEZ») | Comparación sin tildes ni mayúsculas, por palabras; `q=` de la API no ignora tildes |
-| Transferencia | `transferencia` **no es una forma de pago de la app**. <<PENDIENTE: decidir cómo registrarla; hasta entonces, preguntar a Marisa>> |
+| Transferencia | `transferencia` **no es una forma de pago de la app**: se registra con `forma_pago: "bizum"` y el aviso a Marisa indica que el origen era una transferencia (`docs/prd-nivel-medio.md` §6.4; ADR-0002, D12). Supuesto a confirmar con Marisa |
 | La IA devuelve importe no numérico o JSON inválido | Se trata como dudoso y se pregunta a Marisa |
 | El mismo correo se procesa dos veces | No debe duplicar el abono. <<PENDIENTE: marcar correo como leído/etiqueta o registro de ids procesados>> |
 | La API responde 422 | Rama de error → aviso a Marisa con `detail` |
@@ -76,6 +77,6 @@ Responder al cliente por el mismo canal del banco; devolver pagos.
 
 ## 11. Preguntas abiertas
 
-- <<PENDIENTE: forma de pago para transferencias>>
-- <<PENDIENTE: canal para preguntar a Marisa y cómo responde ella (¿manual en la app?)>>
+- ~~Forma de pago para transferencias~~ → resuelto: `bizum`, avisando a Marisa del origen (ADR-0002, D12).
+- ~~Canal para preguntar a Marisa~~ → resuelto: **Gmail**. <<PENDIENTE: cómo responde ella (¿registra a mano en la app?)>>
 - <<PENDIENTE: estrategia anti-duplicados>>

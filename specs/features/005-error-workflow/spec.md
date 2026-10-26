@@ -1,9 +1,10 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 005 · Avisos de error (Error Workflow) — Spec
 
 - **Estado:** Borrador
 - **HU:** HU-05 · Avisos de errores (flujo 8)
+- **Flujo enunciado:** FL-08 · Error Workflow
 - **Nivel:** 🟢 Esencial
 - **Redacta:** <<PENDIENTE>> · **Aprueba:** <<PENDIENTE>>
 - **Fecha:** 2026-10-23
@@ -30,7 +31,7 @@ Datos que entrega el Error Trigger de n8n: nombre e id del flujo, id y URL de la
 
 | Salida | Destinatario | Contenido |
 |---|---|---|
-| Aviso de error | Marisa / tienda, <<PENDIENTE: canal>> | Flujo, paso (nodo), mensaje del error, fecha y hora, enlace a la ejecución |
+| Aviso de error | Marisa / tienda, Gmail (ADR-0002, D12) | Flujo, paso (nodo), mensaje del error, fecha y hora, enlace a la ejecución |
 
 ## 6. Reglas de negocio aplicables
 
@@ -41,7 +42,7 @@ Constitución III y VIII.
 | Caso | Comportamiento esperado |
 |---|---|
 | El mensaje de error contiene una clave, token o cabecera | Se enmascara antes de enviarlo (`X-API-Key`, `Authorization`, `Bearer …`, `password`, `apiKey`) |
-| Falla el propio envío del aviso | n8n no encadena Error Workflows; queda en *Executions*. <<PENDIENTE: ¿canal de respaldo?>> |
+| Falla el propio envío del aviso | n8n no encadena Error Workflows; queda en *Executions*. <<PENDIENTE: ¿respaldo si falla el propio envío por Gmail?>> |
 | Muchos errores seguidos | <<PENDIENTE: ¿agrupar avisos?>> (fuera del nivel esencial) |
 
 ## 8. Criterios de aceptación
@@ -60,4 +61,4 @@ Reintentar automáticamente el flujo fallido.
 
 ## 11. Preguntas abiertas
 
-- <<PENDIENTE: canal>>
+- ~~Canal~~ → resuelto: **Gmail** (ADR-0002, D12).

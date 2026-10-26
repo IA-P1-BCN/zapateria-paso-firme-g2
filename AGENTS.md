@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # AGENTS.md · Zapatería Paso Firme
 
@@ -22,13 +22,13 @@ Ya existe una **app** (FastAPI + HTML/JS) que guarda apartados, abonos, ventas y
 |---|---|---|
 | `backend/` | API FastAPI (MVC: models, schemas, routes, controllers, middleware, services) | ❌ **Nunca.** Solo lectura, como fuente de verdad |
 | `frontend/` | Interfaz HTML/CSS/JS plano (no es React) | ❌ **Nunca.** Solo lectura |
-| `automation/` | Flujos n8n exportados en JSON | ⚠️ Solo el subagente `flow-builder`, con spec **Aprobada** y confirmación humana. `<<PENDIENTE: el enunciado pide la carpeta workflows/; confirmar en equipo si es automation/ o workflows/>>` |
+| `workflows/` | Flujos n8n exportados en JSON (`NNN-slug.json`, ver `workflows/README.md`) | ⚠️ Solo el subagente `flow-builder`, con spec **Aprobada** y confirmación humana (ADR-0002) |
 | `data/` | CSV del Excel antiguo y correos del banco (`data/correos/*.eml`) | ❌ Solo lectura. Son datos de prueba del enunciado |
 | `docs/` | Enunciado, guía de la app y bitácora de IA (`docs/ai-log.md`) | ⚠️ Solo `ai-scribe` puede añadir entradas a `docs/ai-log.md` |
 | `specs/` | Spec-Driven Development: constitución, specs, planes, tareas | ✅ Sí, siguiendo `specs/README.md` |
-| `.agents/` | Fuente única de subagentes, comandos, plantillas y decisiones | ✅ Sí; después ejecuta `python scripts/sync_agents.py` |
-| `.claude/` | Config de Claude Code + **skills** (`.claude/skills/` es la fuente) | ✅ Skills sí; `agents/` y `commands/` son **generados** |
-| `.opencode/` | Config de OpenCode (`opencode.jsonc`; `agents/`, `commands/` y `skills/` generados) | ✅ Solo configuración |
+| `.agents/` | Fuente única de subagentes (`agents/`), comandos (`commands/`), plantilla de bitácora y decisiones (ADR). Ya no contiene skills | ✅ Sí; después ejecuta `python scripts/sync_agents.py` |
+| `.claude/` | Config de Claude Code + **skills** (`.claude/skills/` es la **única fuente** de skills; Claude Code solo lee esta carpeta) | ✅ Skills sí; `agents/` y `commands/` son **generados** |
+| `.opencode/` | Config de OpenCode (`opencode.jsonc`; `agents/`, `commands/` y `skills/` **generados**). OpenCode lee `.opencode/skills/` y, por compatibilidad, `.claude/skills/` | ✅ Solo `opencode.jsonc` |
 | `scripts/` | Utilidades de la capa de agentes (sync, validación, nueva feature) | ✅ Sí |
 
 ## 3. Reglas duras (lo que un agente NO hace nunca)
@@ -69,7 +69,7 @@ Ya existe una **app** (FastAPI + HTML/JS) que guarda apartados, abonos, ventas y
 
 - Nombre de flujo: `[NNN] Nombre en español`, con el **número de su spec** (`[001] Confirmación de apartado`), no el número de flujo del enunciado. Sub-flujos: `[SUB] …`. Error Workflow: `[ERR] Avisos de error`. Enrutador: `[000] Enrutador de eventos`.
 - Nombre de nodo: verbo + objeto (`Pedir apartado a la API`, `Enviar recibo al cliente`); IF/Switch como pregunta (`¿Liquidado?`).
-- Archivo exportado: `automation/NNN-slug.json` `<<PENDIENTE: confirmar carpeta>>`, numerado igual que su spec.
+- Archivo exportado: `workflows/NNN-slug.json` (3 dígitos), numerado igual que su spec. El nº de flujo del enunciado (`FL-XX`) va en la cabecera de la spec (ADR-0002).
 - Rama: `feature/HU-XX-slug`. Una tarea del Kanban = un flujo (o parte) = una rama = una PR.
 - Variables configurables (umbral de venta grande, hora del cierre…) en variables de n8n, no fijas en el nodo.
 
@@ -78,11 +78,11 @@ Ya existe una **app** (FastAPI + HTML/JS) que guarda apartados, abonos, ventas y
 ```
 HU del enunciado ──▶ /sdd-spec ──▶ spec.md (Borrador) ──▶ revisión humana ──▶ Aprobada
       ──▶ /sdd-plan ──▶ plan.md ──▶ /sdd-tasks ──▶ tasks.md (asignables a agente o humano)
-      ──▶ /construir-flujo ──▶ JSON en automation/ ──▶ importar y probar en n8n (humano)
+      ──▶ /construir-flujo ──▶ JSON en workflows/ ──▶ importar y probar en n8n (humano)
       ──▶ /revisar-flujo ──▶ PR con revisión humana ──▶ /bitacora
 ```
 
-Ver `specs/README.md`. Plantillas en `specs/_templates/`. Nueva feature: `python scripts/new_feature.py <NNN> <slug> --hu HU-XX`.
+Ver `specs/README.md`. Plantillas en `specs/_templates/`. Nueva feature: `python scripts/new_feature.py <NNN> <slug> --hu HU-XX --fl FL-XX`.
 
 ## 8. Subagentes y skills disponibles
 
@@ -91,16 +91,20 @@ Ver `specs/README.md`. Plantillas en `specs/_templates/`. Nueva feature: `python
 | Subagente | Para qué | Escribe en |
 |---|---|---|
 | `spec-writer` | Redactar `spec.md` desde una HU | `specs/features/**` |
-| `flow-builder` | Generar el JSON del flujo desde spec+plan+tasks aprobados | `automation/**` y casillas de `tasks.md` |
+| `flow-builder` | Generar el JSON del flujo desde spec+plan+tasks aprobados | `workflows/**` y casillas de `tasks.md` |
 | `flow-reviewer` | Revisar un flujo: seguridad, datos personales, reglas, errores | Nada (solo lectura) |
 | `api-contract-checker` | Comprobar que specs/flujos usan endpoints y campos que existen | Nada (solo lectura) |
 | `test-designer` | Diseñar payloads y casos de prueba (fixtures) | `specs/features/**/fixtures.md` |
 | `ai-scribe` | Registrar prompts y decisiones en la bitácora | `docs/ai-log.md` |
 
-**Skills** (se cargan bajo demanda; se editan en `.claude/skills/` y `python scripts/sync_agents.py` las copia a `.opencode/skills/`):
-`sdd-workflow`, `dominio-apartados`, `tienda-api`, `n8n-convenciones`, `n8n-import-export`, `revision-seguridad-flujos`, `datos-de-prueba`, `trazabilidad-ia`.
+**Skills** (se cargan bajo demanda; se editan **solo** en `.claude/skills/` y `python scripts/sync_agents.py` las copia a `.opencode/skills/`):
+- Del proyecto: `sdd-workflow`, `dominio-apartados`, `tienda-api`, `n8n-convenciones`, `n8n-import-export`, `revision-seguridad-flujos`, `datos-de-prueba`, `trazabilidad-ia`.
+- Del equipo: `paso-firme-review`, `paso-firme-verify`.
+- Externas adaptadas (ADR-0002, D8): `n8n-expression-syntax`, `n8n-code-javascript`, `n8n-workflow-patterns`. Si contradicen este archivo o una skill del proyecto, **prevalece el proyecto**.
 
-**Comandos**: `/sdd-spec`, `/sdd-plan`, `/sdd-tasks`, `/construir-flujo`, `/revisar-flujo`, `/bitacora`.
+**Comandos**: `/sdd-spec`, `/sdd-plan`, `/sdd-tasks`, `/construir-flujo`, `/revisar-flujo`, `/bitacora` y, en OpenCode, `/paso-firme-review` y `/paso-firme-verify` (en Claude Code son skills y se invocan igual).
+
+**Orquestación**: los subagentes **no se llaman entre sí**. El agente principal (o el comando) orquesta `spec-writer` → aprobación humana → `/sdd-plan` y `/sdd-tasks` → `flow-builder` → `flow-reviewer` + `api-contract-checker` → `ai-scribe`, con revisión humana entre pasos. Detalle en `.agents/README.md`.
 
 ## 9. Comandos útiles
 

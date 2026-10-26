@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 003 · Abonos a distancia — Fixtures
 
@@ -8,7 +8,7 @@ Los correos están en `data/correos/` (no se copian aquí). El resultado esperad
 |---|---|---|---|
 | F-003-1 | `01_bizum_carmen.eml` | CARMEN RUIZ GARCIA · 10,00 · «zuecos» · bizum | Un único activo de «Carmen Ruiz» → **registra** 10 € |
 | F-003-2 | `02_bizum_jorge.eml` | JORGE M. · 20,00 · «apartado 2 bota» · bizum | Nº de apartado en el concepto → **registra** en ese apartado |
-| F-003-3 | `03_transferencia_lucia.eml` | LUCIA GOMEZ PEREZ · 12,00 · «Liquidar mocasines» · transferencia | Paga justo lo pendiente → **registra** y queda **liquidado** (pendiente de decidir la forma de pago de transferencias) |
+| F-003-3 | `03_transferencia_lucia.eml` | LUCIA GOMEZ PEREZ · 12,00 · «Liquidar mocasines» · transferencia | Paga justo lo pendiente → **registra** con `forma_pago: "bizum"`, queda **liquidado** y se avisa a Marisa de que era una transferencia |
 | F-003-4 | `04_bizum_laura.eml` | LAURA O. · 15,00 · «deportivas» · bizum | Importe > pendiente → **no registra**, avisa a Marisa con el motivo |
 | F-003-5 | `05_bizum_romero.eml` | ROMERO D · 10,00 · (vacío) · bizum | Solo apellido e inicial, sin concepto → **no registra**, pregunta a Marisa |
 | F-003-6 | `06_bizum_paula.eml` | PAULA RAMOS LEON · 20,00 · «zapatillas running…» · bizum | Apartado fuera de plazo → **no registra**, avisa a Marisa |

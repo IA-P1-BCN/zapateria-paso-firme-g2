@@ -1,4 +1,4 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # CLAUDE.md
 
@@ -10,7 +10,7 @@ Las instrucciones del proyecto son las mismas para todas las herramientas y vive
 
 - **Skills**: `.claude/skills/` es la fuente. Tras editar una, ejecuta `python scripts/sync_agents.py` para copiarla a `.opencode/skills/` (la usa el resto del equipo con OpenCode). Se cargan solas cuando son relevantes o con `/<nombre>`.
 - **Subagentes y comandos**: `.claude/agents/` y `.claude/commands/` son **generados**. Edita `.agents/agents/` o `.agents/commands/` y ejecuta `python scripts/sync_agents.py`.
-- **Permisos**: `.claude/settings.json` bloquea editar `backend/` y `frontend/` y leer `.env`, y pide confirmación para tocar `automation/`, hacer commit o push. Tus ajustes personales van en `.claude/settings.local.json` (no se sube).
+- **Permisos**: `.claude/settings.json` bloquea editar `backend/` y `frontend/` y leer `.env`, y pide confirmación para tocar `workflows/`, hacer commit o push. Tus ajustes personales van en `.claude/settings.local.json` (no se sube).
 - **n8n-mcp** (opcional, lo recomienda el enunciado). Se añade en ámbito *local* para que la clave no llegue al repo:
 
   ```bash

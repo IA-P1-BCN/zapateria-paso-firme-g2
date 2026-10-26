@@ -1,9 +1,9 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 001 · Confirmación de apartado — Plan
 
 - **Estado del plan:** Borrador (no se construye hasta que la spec esté `Aprobada`)
-- **Flujo n8n:** `[001] Confirmación de apartado` → `automation/001-confirmacion-apartado.json` <<PENDIENTE: confirmar carpeta>>
+- **Flujo n8n:** `[001] Confirmación de apartado` → `workflows/001-confirmacion-apartado.json`
 
 ## 1. Diseño del flujo
 
@@ -13,7 +13,7 @@
 | 2 | `Formatear importes y fechas` | Set (o Code pequeño) | `79.9 → "79,90 €"`, `2027-01-18 → "18/01/2027"`; no cambia valores |
 | 3 | `¿Tiene correo?` | IF (`email` no vacío) | |
 | 4a | `Enviar confirmación al cliente` | <<PENDIENTE: Gmail / Send Email / Telegram>> | Plantilla con los campos de la spec |
-| 4b | `Avisar a la tienda: sin correo` | <<PENDIENTE: canal tienda>> | Nº apartado + nombre |
+| 4b | `Avisar a la tienda: sin correo` | Gmail (Send) | Nº apartado + nombre |
 
 ## 2. Llamadas a la API de la tienda
 

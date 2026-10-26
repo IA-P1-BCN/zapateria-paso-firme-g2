@@ -1,9 +1,10 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 002 · Recibo de abono — Spec
 
 - **Estado:** Borrador
 - **HU:** HU-02 · Recibo de cada abono (flujo 2)
+- **Flujo enunciado:** FL-02 · Recibo de abono
 - **Nivel:** 🟢 Esencial
 - **Redacta:** <<PENDIENTE>> · **Aprueba:** <<PENDIENTE>>
 - **Fecha:** 2026-10-23
@@ -70,5 +71,5 @@ Mostrar el historial completo de abonos.
 
 ## 11. Preguntas abiertas
 
-- <<PENDIENTE: canal (mismo que 001)>>
+- ~~Canal~~ → resuelto: **Gmail** (mismo que 001; ADR-0002, D12).
 - <<PENDIENTE: ¿mostrar forma de pago en el recibo?>>

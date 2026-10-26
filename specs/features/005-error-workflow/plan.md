@@ -1,9 +1,9 @@
-# SCOPE: infraestructura-agentes (NO tocar backend/frontend/automation)
+# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)
 
 # 005 · Avisos de error — Plan
 
 - **Estado del plan:** Borrador (no se construye hasta que la spec esté `Aprobada`)
-- **Flujo n8n:** `[ERR] Avisos de error` → `automation/005-error-workflow.json` <<PENDIENTE: confirmar carpeta>>
+- **Flujo n8n:** `[ERR] Avisos de error` → `workflows/005-error-workflow.json`
 
 ## 1. Diseño del flujo
 
@@ -11,7 +11,7 @@
 |---|---|---|---|
 | 1 | `Cuando falla un flujo` | Error Trigger | |
 | 2 | `Preparar aviso sin secretos` | Code | Toma `workflow.name`, `execution.lastNodeExecuted`, `execution.error.message`, `execution.url`; enmascara patrones de secreto |
-| 3 | `Avisar a la tienda` | <<PENDIENTE: canal>> | Retry On Fail |
+| 3 | `Avisar a la tienda` | Gmail (Send) | Retry On Fail |
 
 ## 2. Llamadas a la API de la tienda
 
