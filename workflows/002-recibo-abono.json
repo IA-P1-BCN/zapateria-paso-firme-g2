@@ -1,0 +1,348 @@
+{
+  "name": "[002] Recibo de abono",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "002-n01",
+      "name": "Recibir abono registrado",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "002-a01",
+              "name": "tienda_email",
+              "value": "tienda@pasofirme.example",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "002-n02",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "002-a02",
+              "name": "importe_fmt",
+              "value": "={{ Number($json.importe).toFixed(2).replace('.', ',') + ' €' }}",
+              "type": "string"
+            },
+            {
+              "id": "002-a03",
+              "name": "abonado_fmt",
+              "value": "={{ Number($json.abonado).toFixed(2).replace('.', ',') + ' €' }}",
+              "type": "string"
+            },
+            {
+              "id": "002-a04",
+              "name": "pendiente_fmt",
+              "value": "={{ Number($json.pendiente).toFixed(2).replace('.', ',') + ' €' }}",
+              "type": "string"
+            },
+            {
+              "id": "002-a05",
+              "name": "fecha_limite_fmt",
+              "value": "={{ String($json.fecha_limite).slice(0, 10).split('-').reverse().join('/') }}",
+              "type": "string"
+            },
+            {
+              "id": "002-a06",
+              "name": "talla_txt",
+              "value": "={{ String($json.talla ?? '').trim() ? ', talla ' + String($json.talla).trim() : '' }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "002-n03",
+      "name": "Formatear importes y fechas",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "002-c01",
+              "leftValue": "={{ String($json.email ?? '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "002-n04",
+      "name": "¿Tiene correo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "002-c02",
+              "leftValue": "={{ $json.estado }}",
+              "rightValue": "liquidado",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "002-n05",
+      "name": "¿Liquidado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.email.trim() }}",
+        "subject": "=¡Ya puedes recoger tus zapatos! · Apartado nº {{ $json.id }}",
+        "emailType": "text",
+        "message": "=Hola {{ $json.cliente }}: hemos recibido tu abono de {{ $json.importe_fmt }} y tu apartado nº {{ $json.id }} ({{ $json.producto }}{{ $json.talla_txt }})\nestá pagado por completo ({{ $json.abonado_fmt }}). Ya puedes pasar por la tienda a recogerlos. Zapatería Paso Firme",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Zapatería Paso Firme"
+        }
+      },
+      "id": "002-n06",
+      "name": "Enviar aviso de recogida",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        100
+      ],
+      "webhookId": "002-n06-wh",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "Correo tienda"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.email.trim() }}",
+        "subject": "=Recibo de tu abono · Apartado nº {{ $json.id }}",
+        "emailType": "text",
+        "message": "=Hola {{ $json.cliente }}: hemos recibido tu abono de {{ $json.importe_fmt }} para el apartado nº {{ $json.id }} ({{ $json.producto }}{{ $json.talla_txt }}).\nTotal abonado: {{ $json.abonado_fmt }}. Pendiente: {{ $json.pendiente_fmt }}. Fecha límite para completar el pago: {{ $json.fecha_limite_fmt }}.\nGracias por tu confianza. Zapatería Paso Firme",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Zapatería Paso Firme"
+        }
+      },
+      "id": "002-n07",
+      "name": "Enviar recibo al cliente",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        300
+      ],
+      "webhookId": "002-n07-wh",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "Correo tienda"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.tienda_email }}",
+        "subject": "=Recibo no enviado · Apartado nº {{ $json.id }}",
+        "emailType": "text",
+        "message": "=No se pudo enviar el recibo del abono de {{ $json.importe_fmt }} del apartado nº {{ $json.id }} ({{ $json.cliente }}): el cliente no tiene correo.{{ $json.estado === 'liquidado' ? '\\nEl apartado ha quedado liquidado: avisadle para que recoja los zapatos.' : '' }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Zapatería Paso Firme"
+        }
+      },
+      "id": "002-n08",
+      "name": "Avisar a la tienda: sin correo",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        480
+      ],
+      "webhookId": "002-n08-wh",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "Correo tienda"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "content": "## [002] Recibo de abono\nSpec: specs/features/002-recibo-abono/ (FL-02, HU-02).\nEntrada: `datos` de `abono.registrado` en la raíz, desde `[000] Enrutador de eventos`.\n\n**Tras importar:**\n- Asignar la credencial Gmail OAuth2 `Correo tienda` en los 3 nodos de envío.\n- Settings → Error workflow: `[ERR] Avisos de error` (en el JSON va `<<ASIGNAR_EN_N8N>>` porque aún no existe).\n- Decide `estado`, nunca `pendiente`. No recalcula importes.",
+        "height": 300,
+        "width": 420
+      },
+      "id": "002-n09",
+      "name": "Nota: cómo usar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -80
+      ]
+    }
+  ],
+  "connections": {
+    "Recibir abono registrado": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Formatear importes y fechas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear importes y fechas": {
+      "main": [
+        [
+          {
+            "node": "¿Tiene correo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene correo?": {
+      "main": [
+        [
+          {
+            "node": "¿Liquidado?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar a la tienda: sin correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Liquidado?": {
+      "main": [
+        [
+          {
+            "node": "Enviar aviso de recogida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar recibo al cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "<<ASIGNAR_EN_N8N>>"
+  },
+  "tags": []
+}
