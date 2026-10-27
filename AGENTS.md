@@ -31,6 +31,8 @@ Ya existe una **app** (FastAPI + HTML/JS) que guarda apartados, abonos, ventas y
 | `.opencode/` | Config de OpenCode (`opencode.jsonc`; `agents/`, `commands/` y `skills/` **generados**). OpenCode lee `.opencode/skills/` y, por compatibilidad, `.claude/skills/` | ✅ Solo `opencode.jsonc` |
 | `scripts/` | Utilidades de la capa de agentes (sync, validación, nueva feature) | ✅ Sí |
 
+> **Cabecera `# SCOPE` (cómo leerla).** La primera línea `# SCOPE: infraestructura-agentes (NO tocar backend/frontend/workflows)` de los archivos de la capa de agentes (este incluido) dice **a qué capa pertenece el archivo**; no es una regla nueva. Su «NO tocar» se aplica a las **ramas de infraestructura** de agentes, que no deben cambiar esas carpetas (lo comprueba `python scripts/validate_agent_infra.py --alcance --base develop`). Una **feature** con spec `Aprobada` sí escribe su flujo en `workflows/`, a través de `flow-builder` y con confirmación humana (tabla de arriba; ADR-0002, D10). `backend/` y `frontend/` siguen siendo de solo lectura siempre (regla 1).
+
 ## 3. Reglas duras (lo que un agente NO hace nunca)
 
 1. **No modifica `backend/` ni `frontend/`.** Si una automatización necesita algo que la app no tiene, se anota como `<<PENDIENTE>>` en la spec y decide un humano.
