@@ -2,12 +2,12 @@
 
 # 000 · Enrutador de eventos — Spec
 
-- **Estado:** Borrador
+- **Estado:** Aprobada
 - **HU:** requisito del nivel esencial («un único webhook que reparta los eventos con un nodo Switch según el campo `evento`»)
 - **Flujo enunciado:** —
 - **Nivel:** 🟢 Esencial
-- **Redacta:** <<PENDIENTE>> · **Aprueba:** <<PENDIENTE>>
-- **Fecha:** 2026-10-23
+- **Redacta:** Brian (con OpenCode · big-pickle) · **Aprueba:** Levi
+- **Fecha:** 2026-10-27
 
 ## 1. Objetivo
 
@@ -40,6 +40,8 @@ Tener **un solo punto de entrada** para todos los avisos de la app y repartir ca
 | `apartado.vencido` | Flujo `007` (aviso de vale) cuando exista; mientras, no hace nada |
 | Evento desconocido | No falla; queda registrado en la ejecución (rama *fallback*) |
 
+> **Entrega incremental:** el destino final de `apartado.creado` y `abono.registrado` es 001 y 002. Mientras esos flujos no existan, sus ramas terminan en un No Op; el cableado se hace en T-000-08.
+
 ## 6. Reglas de negocio aplicables
 
 Ninguna regla de importes. Constitución I (se reenvía `datos` tal cual, sin transformar importes).
@@ -49,15 +51,15 @@ Ninguna regla de importes. Constitución I (se reenvía `datos` tal cual, sin tr
 | Caso | Comportamiento esperado |
 |---|---|
 | `evento` desconocido o vacío | Rama *fallback*; la ejecución termina bien y no avisa al cliente |
-| Falla un flujo hijo | Lo recoge el Error Workflow (`005`); el enrutador no reintenta |
+| Falla un flujo hijo | Lo recoge el Error Workflow (`005`) cuando el enrutador esté cableado a 001/002; mientras, las ramas No Op no fallan. El Error Workflow del enrutador se asigna en T-000-08 |
 | n8n caído cuando la app avisa | El aviso se pierde (la app no reintenta). Fuera de alcance: los flujos programados cubren los datos críticos |
 
 ## 8. Criterios de aceptación
 
-- [ ] CA-1 Con el flujo publicado, crear un apartado en la app produce una ejecución del enrutador que llega a la rama `apartado.creado`.
-- [ ] CA-2 Cada uno de los 4 eventos sale por su rama (comprobado con los payloads de `fixtures.md`).
-- [ ] CA-3 Un evento desconocido no produce error.
-- [ ] CA-4 Las expresiones leen `{{ $json.body.evento }}`, no `{{ $json.evento }}`.
+- [x] CA-1 Con el flujo publicado, crear un apartado en la app produce una ejecución del enrutador que llega a la rama `apartado.creado`.
+- [x] CA-2 Cada uno de los 4 eventos sale por su rama (comprobado con los payloads de `fixtures.md`).
+- [x] CA-3 Un evento desconocido no produce error.
+- [x] CA-4 Las expresiones leen `{{ $json.body.evento }}`, no `{{ $json.evento }}`.
 
 ## 9. Datos personales
 
@@ -69,4 +71,4 @@ Recibe nombre, teléfono y email del cliente. No los envía a terceros; solo los
 
 ## 11. Preguntas abiertas
 
-- <<PENDIENTE: ¿los flujos hijos se llaman con Execute Workflow (sub-flujos) o el enrutador contiene las ramas? Recomendado: Execute Workflow, un flujo por HU, para repartir el trabajo sin conflictos>>
+- **Resuelta (2026-10-27):** los flujos hijos se llaman con Execute Workflow, un sub-flujo por evento, para repartir el trabajo sin conflictos. Hasta que existan los flujos 001 y 002, la rama correspondiente termina en un No Op; el cableado se hará en T-000-08.
