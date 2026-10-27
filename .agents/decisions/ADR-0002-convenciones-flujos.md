@@ -2,7 +2,7 @@
 
 # ADR-0002 · Convenciones de flujos y orden de la capa de agentes
 
-- **Estado:** Propuesta (pendiente de aprobación del equipo)
+- **Estado:** Aprobada (2026-10-27)
 - **Fecha:** 2026-10-25
 - **Rama:** `feature/HU-agentic-work2-v2`
 - **Sustituye en parte a:** ADR-0001 (ambigüedad «carpeta de flujos» y D2 sobre dónde viven las skills)

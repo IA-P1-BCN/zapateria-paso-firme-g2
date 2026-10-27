@@ -1,0 +1,251 @@
+{
+  "name": "[000] Enrutador de eventos",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tienda",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "7026ad96-4c3e-41ab-9300-80f521686b71",
+      "name": "Recibir evento de la tienda",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "fca79aa8-a788-460a-b7b9-3dacc2f4dadd"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.evento }}",
+                    "rightValue": "apartado.creado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "18c1f273-e2a4-4f9c-97cf-5b725b60dff6"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "apartado.creado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.evento }}",
+                    "rightValue": "abono.registrado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d03f678a-94ee-4a20-9f54-f2a2a8801e57"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "abono.registrado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.evento }}",
+                    "rightValue": "venta.registrada",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "cad3b0f9-5931-401f-b8ab-d322985be2e3"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "venta.registrada"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.evento }}",
+                    "rightValue": "apartado.vencido",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "eb17e36c-f53c-48ca-b7e0-7b0b5c86f6c5"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "apartado.vencido"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "dbe4785c-f017-4ece-a5ad-faf048508eb7",
+      "name": "¿Qué evento es?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d679eec2-f00c-4e37-a7e6-1cff5c8fcdf8",
+      "name": "Confirmación pendiente",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        720,
+        100
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6ad66c7a-9fd7-4400-ad76-7249be89147a",
+      "name": "Recibo pendiente",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        720,
+        220
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fbb46fb5-e42d-4956-9664-3836f9c9f1a4",
+      "name": "Venta registrada (sin flujo aún)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        720,
+        340
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d5a856ab-ef9a-4491-a32d-10a334a4ddc1",
+      "name": "Apartado vencido (sin flujo aún)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        720,
+        460
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "84e95fb3-fab4-4e47-b76b-cb6fbbaf8d39",
+      "name": "Evento desconocido",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        720,
+        580
+      ]
+    }
+  ],
+  "connections": {
+    "Recibir evento de la tienda": {
+      "main": [
+        [
+          {
+            "node": "¿Qué evento es?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Qué evento es?": {
+      "main": [
+        [
+          {
+            "node": "Confirmación pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Recibo pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Venta registrada (sin flujo aún)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Apartado vencido (sin flujo aún)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Evento desconocido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": []
+}
