@@ -17,9 +17,9 @@
 
 ## Seguimiento
 
-- [ ] T-003-01
-- [ ] T-003-02
-- [ ] T-003-03
+- [x] T-003-01 · Spec aprobada por el responsable humano en sesión el 2026-10-27 (decisiones: Data Table `Emails`, etiqueta `Banco` + `BANCO_REMITENTES`, Marisa registra a mano, `[TEST]` aparte, `referencia_apartado` en el esquema, transferencia → `bizum`). Queda `<<PENDIENTE>>` el modelo de IA y `Aprueba:`
+- [x] T-003-02 · `fixtures.md` confirmado contra la API tras reiniciar los datos el 2026-10-27 (ids 1, 2, 3, 11, 12, 16 y 24; `q=Antonio` y `q=Silvia Cortes` vacíos). Añade F-003-10 (duplicado), F-003-11 (la IA no decide) y F-003-12 (remitente ajeno)
+- [x] T-003-03 · Prompt y esquema en `plan.md` §7. **No probado contra un modelo**: modelo de IA `<<PENDIENTE>>`
 - [ ] T-003-04
 - [ ] T-003-05
 - [ ] T-003-06
