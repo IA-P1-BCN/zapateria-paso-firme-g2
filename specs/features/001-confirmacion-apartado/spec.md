@@ -2,11 +2,11 @@
 
 # 001 · Confirmación de apartado — Spec
 
-- **Estado:** Borrador
+- **Estado:** Aprobada
 - **HU:** HU-01 · Confirmación al apartar (flujo 1)
 - **Flujo enunciado:** FL-01 · Confirmación de apartado
 - **Nivel:** 🟢 Esencial
-- **Redacta:** <<PENDIENTE>> · **Aprueba:** <<PENDIENTE>>
+- **Redacta:** Brian Hañari · **Aprueba:** Equipo Paso Firme (confirmada para construcción)
 - **Fecha:** 2026-10-23
 
 ## 1. Objetivo
@@ -30,7 +30,7 @@ Que el cliente reciba al momento un resumen de lo que ha apartado, lo pagado, lo
 | `id` | evento | Sí | Nº de apartado |
 | `cliente` | evento | Sí | Para el saludo |
 | `email` | evento | No | Si falta, ver §7 |
-| `telefono` | evento | No | Solo si el canal es Telegram/SMS <<PENDIENTE>> |
+| `telefono` | evento | No | **No se usa**: el canal es Gmail (ADR-0002, D12) |
 | `producto`, `talla` | evento | `talla` puede ser `null` | |
 | `precio`, `abonado`, `pendiente` | evento | Sí | **Se usan tal cual** (Constitución I) |
 | `fecha_limite` | evento | Sí | `AAAA-MM-DD`; se muestra como `DD/MM/AAAA` |
@@ -40,8 +40,8 @@ Que el cliente reciba al momento un resumen de lo que ha apartado, lo pagado, lo
 
 | Salida | Destinatario | Canal | Contenido |
 |---|---|---|---|
-| Confirmación | Cliente | <<PENDIENTE: correo (Gmail/SMTP) o Telegram>> | Nº apartado, producto, talla, precio, abonado, pendiente, fecha límite |
-| Aviso de no envío | Tienda (Marisa) | Gmail (ADR-0002, D12) | «No se pudo enviar la confirmación del apartado #id: el cliente no tiene correo» |
+| Confirmación | Cliente | Gmail (nodo Gmail, credencial `Gmail tienda`) | Nº apartado, producto, talla, precio, abonado, pendiente, fecha límite |
+| Aviso de no envío | Tienda (Marisa) | Gmail, misma credencial `Gmail tienda` | «No se pudo enviar la confirmación del apartado #id: el cliente no tiene correo» |
 
 ## 6. Reglas de negocio aplicables
 
@@ -51,9 +51,9 @@ R-01, R-04 (informativas: ya las aplicó la app). Constitución I y IX.
 
 | Caso | Comportamiento esperado |
 |---|---|
-| Sin `email` (y canal = correo) | No falla: avisa a la tienda con el nº de apartado y el nombre |
+| Sin `email` (`null` o cadena vacía) | No falla: avisa a la tienda con el nº de apartado y el nombre |
 | `talla` nula | El mensaje omite la talla, sin mostrar «null» |
-| `estado = liquidado` desde el alta | El mensaje indica que está pagado y puede recogerlos <<PENDIENTE: confirmar texto>> |
+| `estado = liquidado` desde el alta | El mensaje dice: «Ya está pagado: puedes recogerlo cuando quieras» y omite el pendiente |
 | Fallo del proveedor de correo | Error Workflow `005` |
 
 ## 8. Criterios de aceptación
@@ -65,7 +65,8 @@ R-01, R-04 (informativas: ya las aplicó la app). Constitución I y IX.
 
 ## 9. Datos personales
 
-Nombre, email (y teléfono si el canal lo usa). Salen solo hacia el proveedor de mensajería. No se envían a modelos de IA.
+Nombre y email del cliente. Salen únicamente hacia Gmail (Google) como proveedor de correo, con la credencial
+`Gmail tienda`. El teléfono llega en el evento pero **no se usa** en este flujo. No se envían a modelos de IA.
 
 ## 10. Fuera de alcance
 
@@ -74,4 +75,6 @@ Redacción del mensaje con IA (nivel avanzado).
 ## 11. Preguntas abiertas
 
 - ~~Canal de mensajes~~ → resuelto: **Gmail** para cliente y tienda (`docs/prd-nivel-medio.md` §1; ADR-0002, D12).
-- <<PENDIENTE: remitente y asunto del correo>>
+- **Remitente:** la cuenta de la credencial `Gmail tienda`.
+  `<<PENDIENTE: dirección real de la tienda (la crea Levi con el OAuth del equipo)>>`.
+- **Asunto (propuesto):** `Confirmación de tu apartado · Paso Firme`. El número de apartado va en el cuerpo, no en el asunto.
