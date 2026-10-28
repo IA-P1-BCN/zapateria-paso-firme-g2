@@ -16,6 +16,8 @@ curl -X POST http://localhost:5678/webhook-test/tienda -H "Content-Type: applica
 | F-000-3 | `venta.registrada` | No Op venta |
 | F-000-4 | `apartado.vencido` | No Op vencido |
 | F-000-5 | `{"evento": "otra.cosa", "datos": {}}` | Fallback, sin error |
+| F-000-6 | `{"evento": "", "datos": {}}` | Fallback, sin error |
+| F-000-7 | `{"datos": {}}` (sin `evento`) | Fallback, sin error |
 
 **F-000-1**
 ```json
@@ -36,3 +38,22 @@ curl -X POST http://localhost:5678/webhook-test/tienda -H "Content-Type: applica
 ```json
 {"evento": "apartado.vencido", "datos": {"apartado": {"id": 16, "cliente": "Paula Ramos", "email": "paula16@example.com", "producto": "Zapatilla running azul", "precio": 64.5, "abonado": 5.0, "pendiente": 59.5, "estado": "vencido"}, "vale": {"id": 2, "codigo": "VALE-00016", "apartado_id": 16, "fecha": "2026-10-20", "importe": 5.0, "usado": 0}}}
 ```
+
+## Resultados de las pruebas (2026-10-27)
+
+Pruebas manuales con la **Test URL** y prueba final desde la app con la **Production URL**:
+
+| Caso | Ejecución | Modo | Producción | Último nodo | Resultado |
+|---|---|---|---|---|---|
+| F-000-1 | 2 | `manual` | No | `Confirmación pendiente` | OK |
+| F-000-2 | 3 | `manual` | No | `Recibo pendiente` | OK |
+| F-000-3 | 4 | `manual` | No | `Venta registrada (sin flujo aún)` | OK |
+| F-000-4 | 5 | `manual` | No | `Apartado vencido (sin flujo aún)` | OK |
+| F-000-5 | 6 | `manual` | No | `Evento desconocido` | OK |
+| F-000-6 | 7 | `manual` | No | `Evento desconocido` | OK |
+| F-000-7 | 8 | `manual` | No | `Evento desconocido` | OK |
+| CA-1 (apartado #25) | 9 | `webhook` | Sí | `Confirmación pendiente` | OK |
+
+La ejecución 1 no se usa como evidencia: fue una ejecución parcial del trigger (solo el nodo Webhook). Todas las ejecuciones de la tabla terminaron en `success`.
+
+El flujo se desactivó después de CA-1; el JSON versionado permanece con `"active": false`.
