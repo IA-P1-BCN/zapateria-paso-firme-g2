@@ -1,0 +1,107 @@
+{
+  "name": "[ERR] Avisos de error",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "005-n01",
+      "name": "Cuando falla un flujo",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// [ERR] Avisos de error · Preparar aviso sin datos\n// Compone el aviso (flujo, nodo, error, fecha, enlace) a partir del item del\n// Error Trigger y enmascara lo que NO debe salir por correo. Modo \"Run Once\n// for All Items\": el Error Trigger entrega 1 solo item y la búsqueda tolerante\n// de campos es más simple (y más ligera) en una sola pasada.\n//\n// POLÍTICA DE ENMASCARADO (RGPD, spec §9, CA-2) — elegida: enmascarado COMPLETO.\n//   · Emails → `***@***` · Teléfonos españoles de 9 cifras (con o sin espacios,\n//     `6XX XXX XXX`) → `***` · Nombres de cliente (solo cuando van detrás de\n//     una preposición típica en español: «registrar a Carmen Ruiz», «cliente\n//     …») → `***`. No se usa captura parcial tipo `c***@example.com`: el aviso\n//     es diagnóstico (qué falló y dónde); el detalle completo con los datos\n//     queda a un clic en el enlace a la ejecución de n8n.\n//   · Secretos: `X-API-Key`, `Authorization`, `Bearer …`, `password`, `apiKey`,\n//     `token`, `clave`, `contraseña`, `secret` conservan la etiqueta y pierden\n//     el valor (`X-API-Key: ***`, `Bearer ***`); todo bloque alfanumérico de\n//     32+ caracteres (token largo pegado en el mensaje) → `***`.\n//   · El item del Error Trigger varía entre versiones de n8n: cada campo se\n//     busca en la raíz, en `body`, en `execution` y en `execution.error`, con\n//     valores por defecto si falta algo (ver nota pegajosa).\nconst item = $input.first().json ?? {};\nconst desdeBody = item && typeof item.body === 'object' ? item.body : {};\nconst ejecucion = item.execution ?? desdeBody.execution ?? {};\nconst errorEjec = ejecucion.error ?? desdeBody.error ?? {};\nconst flujoRaw = item.workflow ?? desdeBody.workflow ?? {};\n\n// Secretos: la etiqueta queda, el valor se cambia por *** (F-005-2).\nfunction enmascararSecretos(texto) {\n  return texto\n    .replace(/(x-api-key|authorization)\\s*[:=]\\s*\\S+/gi, '$1: ***')\n    .replace(/(password|api-?key|accesstoken|token|secret|clave|contrase\\u00f1a)\\s*[:=]\\s*\\S+/gi, '$1: ***')\n    .replace(/Bearer\\s+\\S+/gi, 'Bearer ***')\n    .replace(/\\b[A-Za-z0-9_\\-]{32,}\\b/g, '***');\n}\n\n// Datos personales. Orden: secretos → emails → teléfonos → nombres (F-005-4).\nfunction enmascarar(texto) {\n  let t = String(texto ?? '');\n  t = enmascararSecretos(t);\n  t = t.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g, '***@***');\n  t = t.replace(/\\b[6789]\\d{2}[\\s.\\-]\\d{3}[\\s.\\-]\\d{3}\\b/g, '***');\n  t = t.replace(/\\b[6789]\\d{8}\\b/g, '***');\n  // Nombre plausible: dos o tres palabras en mayúscula inicial tras una\n  // preposición típica («a / al / del / la / para / cliente»). Limitación\n  // conocida: si el error nombra a un cliente sin esa estructura, no se\n  // detecta; por eso el aviso nunca deber ser la fuente de datos de clientes.\n  t = t.replace(/\\b([aA]l|[aA]|[dD]el?|[eE]l|[lL]a|[pP]ara|[cC]liente)\\s+([A-Z\\u00c1\\u00c9\\u00cd\\u00d3\\u00da\\u00dc][a-z\\u00e1\\u00e9\\u00ed\\u00f3\\u00fa\\u00fc]+(?:\\s+(?:[A-Z\\u00c1\\u00c9\\u00cd\\u00d3\\u00da\\u00dc][a-z\\u00e1\\u00e9\\u00ed\\u00f3\\u00fa\\u00fc]+|de|la|del)){1,2})\\b/g, '$1 ***');\n  return t;\n}\n\n// Búsqueda tolerante: los campos pueden venir en varias claves/posiciones.\nfunction buscar(contenedores, claves) {\n  for (const c of contenedores) {\n    if (c && typeof c === 'object') {\n      for (const k of claves) {\n        const v = c[k];\n        if (v != null && v !== '') {\n          return v;\n        }\n      }\n    }\n  }\n  return undefined;\n}\n\ntry {\n  let nombreFlujo = 'Flujo desconocido';\n  let idFlujo = '';\n  if (flujoRaw && typeof flujoRaw.name === 'string' && flujoRaw.name) {\n    nombreFlujo = flujoRaw.name;\n  }\n  if (flujoRaw && flujoRaw.id != null && flujoRaw.id !== '') {\n    idFlujo = String(flujoRaw.id);\n  }\n\n  let nodo = buscar([ejecucion, desdeBody, item], ['lastNodeExecuted', 'last_node_executed']) ?? 'Nodo desconocido';\n\n  let mensajeRaw = buscar([errorEjec], ['message', 'description']);\n  mensajeRaw = mensajeRaw ?? buscar([ejecucion, desdeBody, item], ['errorMessage', 'detail']) ?? '';\n  let mensaje = typeof mensajeRaw === 'string' ? mensajeRaw : JSON.stringify(mensajeRaw);\n  const LIMITE = 600;\n  mensaje = mensaje ? mensaje.slice(0, LIMITE) + (mensaje.length > LIMITE ? '…' : '') : 'Sin mensaje del error';\n\n  // Fecha y hora en zona Europe/Madrid, formato español.\n  const inicio = buscar([ejecucion, desdeBody, item], ['startedAt', 'started_at']);\n  let dt = inicio != null ? DateTime.fromISO(String(inicio)) : DateTime.now();\n  if (!dt.isValid) {\n    dt = DateTime.now();\n  }\n  const fecha = dt.setZone('Europe/Madrid').toFormat('dd/MM/yyyy HH:mm');\n\n  const url = buscar([ejecucion, desdeBody, item], ['url']) ?? 'Enlace no incluido por esta versión de n8n';\n\n  return [{\n    json: {\n      flujo: nombreFlujo + (idFlujo ? ` (id ${idFlujo})` : ''),\n      nodo,\n      fecha,\n      error_txt: enmascarar(mensaje),\n      detalle: String(url)\n    }\n  }];\n} catch (e) {\n  // El aviso es el último recurso: si prepararlo falla, envía lo mínimo.\n  try {\n    return [{\n      json: {\n        flujo: 'Flujo desconocido',\n        nodo: 'Nodo desconocido',\n        fecha: DateTime.now().setZone('Europe/Madrid').toFormat('dd/MM/yyyy HH:mm'),\n        error_txt: enmascarar(`No se pudo leer el item del Error Trigger: ${String(e && e.message ? e.message : e)}`),\n        detalle: 'Enlace no disponible'\n      }\n    }];\n  } catch (e2) {\n    return [{\n      json: {\n        flujo: 'Fallo en un flujo',\n        nodo: 'Nodo desconocido',\n        fecha: 'Fecha no disponible',\n        error_txt: 'No se pudo preparar el aviso con detalle. Ver la ejecución en n8n.',\n        detalle: 'Enlace no disponible'\n      }\n    }];\n  }\n}"
+      },
+      "id": "005-n02",
+      "name": "Preparar aviso sin datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "tienda@pasofirme.example",
+        "subject": "=⚠️ Fallo en {{ $json.flujo }}",
+        "emailType": "text",
+        "message": "=⚠️ Fallo en {{ $json.flujo }}\nNodo: {{ $json.nodo }}\nFecha: {{ $json.fecha }}\nError: {{ $json.error_txt }}\n\nDetalle: {{ $json.detalle }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Zapatería Paso Firme"
+        }
+      },
+      "id": "005-n03",
+      "name": "Avisar a la tienda",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        520,
+        300
+      ],
+      "webhookId": "005-n03-wh",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "Gmail tienda"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "content": "## [ERR] Avisos de error\nSpec: specs/features/005-error-workflow/ (FL-08, HU-05).\n`<<PENDIENTE: confirmar estructura real al importar>>`: el item del Error Trigger varía entre versiones de n8n; el nodo Code busca cada campo en la raíz, `body`, `execution` y `execution.error` — verificar con el primer aviso y actualizar fixtures.md.\n\n**Tras importar (tareas del humano):**\n- Asignar la credencial Gmail OAuth2 `Gmail tienda` (mismo id de n8n que usa el flujo 001; no se crea una nueva) en `Avisar a la tienda`, que va con `id: \"<<ASIGNAR_EN_N8N>>\"`.\n- Cambiar el destinatario a la dirección real de la tienda (la fija Levi); `tienda@pasofirme.example` es solo buzón de prueba y ya tiene la nota `<<PENDIENTE>>` en spec §5/§11.\n- Asignar ESTE flujo en `Settings → Error workflow` de TODOS los demás flujos (uno a uno, la n8n no lo hace sola) · T-005-04, CA-3.\n- Este flujo NO se asigna a sí mismo (n8n no encadena Error Workflows, plan §4): si su propio envío falla, queda como ejecución fallida en Executions.\n- Enmascarado RGPD (spec §9): emails `***@***`, teléfonos `***`, nombres `***`, etiquetas de claves con valor `***` (F-005-2/F-005-4). No envía stack: el detalle completo está en el enlace a la ejecución.\n- Reenvío del Gmail: 3 intentos con 2 s de espera.",
+        "height": 420,
+        "width": 460
+      },
+      "id": "005-n04",
+      "name": "Nota: cómo usar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -200
+      ]
+    }
+  ],
+  "connections": {
+    "Cuando falla un flujo": {
+      "main": [
+        [
+          {
+            "node": "Preparar aviso sin datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar aviso sin datos": {
+      "main": [
+        [
+          {
+            "node": "Avisar a la tienda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
