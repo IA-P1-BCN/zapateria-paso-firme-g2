@@ -325,3 +325,75 @@ En producción, que Gmail mande a Spam un aviso del banco es un riesgo real: n8n
 - `/revisar-flujo 003` (T-003-08) y, si sale APROBADO, pasar la PR #70 a *Ready for review* y volver a pedir revisión a BrianStiv.
 - Antes de activar: remitentes reales del banco en `BANCO_REMITENTES` y en el filtro anti-spam, y el correo de Marisa en `MARISA_EMAIL`.
 - Opcional: F-003-11a/b (con *pinned data*) y F-003-12.
+
+## 2026-10-27 · 000 · T-000-07 · Enrutador de eventos (spec 000 → flujo)
+
+- **Persona responsable:** Miguel Matesanz (`mmatesanzg23`)
+- **Herramienta y modelo:** OpenCode · big-pickle
+- **Subagente / comando:** agente principal; según `tasks.md`: `test-designer` (fixtures) → `flow-builder` (JSON) → `flow-reviewer` (revisión). Sin n8n-mcp.
+- **Rama / Spec / PR:** `feature/HU-00-enrutador-eventos` · `specs/features/000-enrutador-eventos/` · PR <<PENDIENTE>> (T-000-06) · commit `7a037d4`
+
+### Prompt clave
+
+> <<PENDIENTE: prompts exactos de la sesión no disponibles; resumidos, sin datos personales ni claves>>
+
+### Resultado
+
+- Spec 000 de Borrador a Aprobada (aprueba Levi Flores, 2026-10-27); plan, tareas y fixtures (4 eventos + 3 fallback) completos.
+- Flujo `[000] Enrutador de eventos`: Webhook `POST /webhook/tienda` (Respond Immediately) → Switch por `{{ $json.body.evento }}` con fallback → 5 ramas No Op (`apartado.creado`, `abono.registrado`, `venta.registrada`, `apartado.vencido`, evento desconocido). `active: false`, sin credenciales.
+- `flow-reviewer`: APROBADO CON OBSERVACIONES (sin bloqueantes); única observación: `settings.errorWorkflow` aplazado a T-000-08.
+- `validate_workflows.py`: OK. CA-1…CA-4 verificados con fixtures.
+
+### Errores o alucinaciones
+
+No se registraron alucinaciones. Observación del reviewer: `settings.errorWorkflow` no asignado hasta que exista `005`.
+
+### Decisiones
+
+| Propuesta | Decisión | Por qué |
+|---|---|---|
+| Sub-flujos por evento (Execute Workflow) | Aceptada | Permite a 3 personas trabajar en paralelo sin pisar el mismo JSON |
+| Responder de inmediato en el Webhook | Aceptada | La app corta a los 5 s |
+| No Ops provisionales para 001/002 | Aceptada | Cableado en T-000-08 |
+| Asignar Error Workflow ahora | Rechazada (aplazada) | `005` aún no existía |
+
+### Siguientes pasos
+
+- T-000-06: PR y revisión humana (Levi).
+- T-000-08: cablear Execute Workflow a 001/002 y asignar Error Workflow 005.
+
+## 2026-10-29 · 004 · T-004-08 · Cierre diario (spec 004 → flujo)
+
+- **Persona responsable:** Miguel Matesanz (`mmatesanzg23`)
+- **Herramienta y modelo:** OpenCode · big-pickle
+- **Subagente / comando:** agente principal; según `tasks.md`: `test-designer` (fixtures) → `flow-builder` (JSON) → `flow-reviewer` + `api-contract-checker` (revisión). Sin n8n-mcp.
+- **Rama / Spec / PR:** `feature/HU-04-cierre-diario` · `specs/features/004-cierre-diario/` · PR <<PENDIENTE>> (T-004-07) · commit `9938956`
+
+### Prompt clave
+
+> <<PENDIENTE: prompts exactos de la sesión no disponibles; resumidos, sin datos personales ni claves>>
+
+### Resultado
+
+- Spec 004 de Borrador a Aprobada (aprueba Levi Flores, 2026-10-28); plan, tareas y fixtures (F-004-1…F-004-3) completos.
+- Flujo `[004] Cierre diario`: Schedule Trigger 21:30 Europe/Madrid → `Fecha de hoy` → `Pedir ventas del día` (GET /api/ventas) → `Pedir abonos del día` (GET /api/abonos) → `Sumar por forma de pago` (Code) → `Guardar cierre en Google Sheets` (upsert por `fecha`) → `Enviar resumen a Marisa` (Gmail). `active: false`.
+- `alwaysOutputData: true` en ambos HTTP; retryOnFail (2 intentos, 3 s) en HTTP, Sheets y Gmail; errorWorkflow `[ERR] Avisos de error`.
+- T-004-01, T-004-02, T-004-03 y T-004-06 marcadas como hechas; T-004-04 (credenciales/hoja), T-004-05 (prueba) y T-004-07 (PR) pendientes.
+
+### Errores o alucinaciones
+
+No se registraron alucinaciones relevantes. <<PENDIENTE: pegar veredicto de `flow-reviewer`/`api-contract-checker` si se registró>>
+
+### Decisiones
+
+| Propuesta | Decisión | Por qué |
+|---|---|---|
+| Consultar la API (GET ventas/abonos) | Aceptada | Los avisos del webhook no tienen reintentos y pueden perderse |
+| Redondear solo cada total resultante (`Math.round(total * 100) / 100`) | Aceptada | Constitución I y ADR-0002 D6 (evita `0.30000000000000004`) |
+| Upsert por `fecha` en Google Sheets | Aceptada | Si se ejecuta dos veces el mismo día, actualiza la fila sin duplicar |
+
+### Siguientes pasos
+
+- T-004-04: crear credenciales (`API tienda`, Google Sheets, Gmail) y hoja `Cierres`.
+- T-004-05: probar con datos de ejemplo y comparar con la app.
+- T-004-07: PR y revisión humana (Brian).
