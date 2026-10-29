@@ -11,7 +11,7 @@ Responsables: `<<PENDIENTE: asignar en el Kanban>>`.
 | `001-confirmacion-apartado` | HU-01 | FL-01 · Confirmación de apartado | 🟢 Esencial | Borrador |
 | `002-recibo-abono` | HU-02 | FL-02 · Recibo de abono | 🟢 Esencial | Borrador |
 | `003-abonos-a-distancia` | HU-03 | FL-03 · Abonos a distancia | 🟢 Esencial | Borrador |
-| `004-cierre-diario` | HU-04 | FL-05 · Cierre diario | 🟢 Esencial | Borrador |
+| `004-cierre-diario` | HU-04 | FL-05 · Cierre diario | 🟢 Esencial | En construcción |
 | `005-error-workflow` | HU-05 | FL-08 · Error Workflow | 🟢 Esencial | Borrador |
 | `006-venta-grande` | HU-09 | FL-04 · Venta grande | 🟡 Medio | Sin spec |
 | `007-recordatorios-vencimientos` | HU-06, HU-07 | FL-06 · Recordatorios y vencimientos | 🟡 Medio | Sin spec |
