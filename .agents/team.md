@@ -23,16 +23,45 @@ Herramienta y modelo quedan pendientes: los rellena cada persona (un agente no l
 | **Constructor/a** | Plan, tareas, flujo (con `flow-builder`), pruebas en su n8n |
 | **Revisor/a** | Aprueba la spec, pasa `/revisar-flujo` y revisa la PR. Nunca es quien construyó |
 
-## Reparto propuesto del nivel esencial (rotando roles)
+## Reparto confirmado (octubre 2026, en los issues de GitHub)
 
-| Feature | Spec | Construye | Revisa |
-|---|---|---|---|
-| 000 Enrutador + 005 Error Workflow | P1 | P2 | P3 |
-| 001 Confirmación + 002 Recibo | P2 | P3 | P1 |
-| 003 Abonos a distancia | P3 | P1 | P2 |
-| 004 Cierre diario | P1 | P2 | P3 |
+Regla del equipo: **cada persona hace su feature entera** (spec, flujo, pruebas y PR) y la
+**revisa una de las otras dos** (nunca quien construyó). El revisor se añade como asignado
+de la subtarea «PR y revisión humana» y en la de «Revisión de seguridad».
 
-`<<PENDIENTE: confirmar reparto en el Kanban y a qué persona corresponden P1, P2 y P3>>`
+### Nivel esencial
+
+| Feature | Hace entera | Revisa |
+|---|---|---|
+| 000 Enrutador de eventos | Miguel (`mmatesanzg23`) | Levi (`levifvy`) |
+| 001 Confirmación al apartar | Brian (`BrianStiv`) | Miguel |
+| 002 Recibo de abono *(cerrada; quedó sin asignación en GitHub)* | Miguel (cierre de la feature) | Levi |
+| 003 Abonos a distancia | Levi (`levifvy`) | Brian (`BrianStiv`) |
+| 004 Cierre diario | Miguel | Brian |
+| 005 Error Workflow | Brian | Levi |
+
+### Nivel medio
+
+| Feature | Hace entera | Revisa |
+|---|---|---|
+| 006 Venta grande | Levi | Brian |
+| 007 Recordatorios y vencimientos | Brian | Miguel |
+| 008 Informe mensual | Miguel | Levi |
+| 009 Migración del Excel | Levi | Miguel |
+| 010 Sub: buscar apartado | Brian | Levi |
+| 011 Sub: enviar notificación | Miguel | Brian |
+
+### Nivel avanzado
+
+| Feature | Hace entera | Revisa |
+|---|---|---|
+| 012 Asistente de Telegram para clientes | Levi | Brian |
+| 013 Asistente de Telegram para Marisa | Brian | Miguel |
+| 014 Entrada automática de datos | Miguel | Levi |
+| 015 Datos personales *(transversal)* | Los tres (cada uno ajusta sus flujos; webhook: Brian) | Por flujo, el que no lo construyó |
+
+Si 012 y 013 deciden compartir bot, 013 reutiliza la credencial de 012 (ya apuntado en `T-013-03`).
+El reparto se confirma en la daily antes de empezar cada nivel; si salta un cambio, se ajusta aquí **y** en los issues.
 
 ## Daily Scrum
 
