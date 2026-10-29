@@ -131,3 +131,49 @@ Proponer el diff de la spec (textos, bordes, credenciales) antes de aprobarla ev
 - F-002-12: n8n no lanza el Error Workflow en ejecuciones manuales; probarlo en ejecución real.
 - Al importar: asignar la credencial `Correo tienda` y el errorWorkflow.
 - Revisión humana y aprobación de la PR #68 (T-002-06).
+
+## 2026-10-29 · HU-05 · Avisos de error (spec 005 → flujo → revisión MCP)
+
+- **Persona responsable:** levifvy
+- **Herramienta y modelo:** OpenCode · GLM-5.3-Flash Free (`opencode/glm-5.3-flash-free`) como agente principal orquestador, con MCP `n8n-mcp` contra la instancia local (localhost:5678)
+- **Subagente / comando:** `paso-firme-verify` (verificación de la entrega) → `flow-reviewer` (revisión) → `flow-builder` (fix, con confirmación humana) → `ai-scribe` (esta entrada)
+- **Rama / Spec / PR:** `feature/HU-05-avisos-errores` · `specs/features/005-error-workflow/` · PR <<PENDIENTE>> · commits `b2ce42d` (feat: `workflows/005-error-workflow.json`) y `fc00bd2` (docs: spec aprobada, plan, tasks, fixtures); el fix del reviewer queda pendiente de commitear
+
+### Prompt clave
+
+> Encargo de verificación de la entrega de la feature 005 / HU-05 (`/paso-firme-verify`) antes de preparar la PR: comprobar el JSON contra el validador del repo, los tests del backend y los esquemas reales de la instancia de n8n (solo lectura); apuntar el veredicto del `flow-reviewer`, aplicar el fix con `flow-builder` y confirmación humana, sincronizar el borrador de la instancia y cerrar con la bitácora.
+
+### Resultado
+
+- Verificación de la entrega con `paso-firme-verify`: `scripts/validate_workflows.py` 3/3 OK, pytest del backend vía uv (13 passed, 0 failed; en el Python del sistema no había pytest), `git diff --check` limpio. Los 4 nodos del flujo validados contra los esquemas de la instancia con `validate_node_config` (4/4 OK, solo lectura). Nota de método: `validate_workflow` del MCP solo acepta código SDK (no JSON exportado), así que el grafo/estructura se valida con el validador del repo y los nodos con `validate_node_config`.
+- `flow-reviewer`: **CAMBIOS NECESARIOS**. 1 bloqueante: la regex de secretos `\b[A-Za-z0-9_-]{32,}\b` dejaba pasar segmentos centrales de JWT con puntos decodificables, y el mensaje se recortaba a 600 caracteres ANTES de enmascarar (un token cortado por la mitad quedaba en trozos <32 y escapaba). Mejoras: teléfonos con prefijo 34 pegado, fallback de mensaje sin `errorEjec` y `webhookId` cruft en el nodo Gmail, checkbox T-005-02.
+- Fix aplicado por `flow-builder` con confirmación de la usuaria: regex de JWT añadida antes de la de 32+, enmascarar antes de recortar, `(?:34)?` en teléfonos, `errorEjec` añadido al fallback de mensaje, `webhookId` eliminado del JSON, T-005-02 marcada y caso JWT añadido a la fixture F-005-2. Re-ejecutado `validate_workflows.py` (3/3 OK) y prueba del enmascaramiento fuera de n8n (node) correcta.
+- El borrador `[ERR]` ya importado en la instancia (id `9JXk22pXHSDwT19U`, `active: false`) se sincronizó vía `update_workflow` (operación `updateNodeParameters` del `jsCode` del Code, `versionName` «Fix masking JWT»). NO se activó ni se publicó (regla 3).
+
+### Errores o alucinaciones
+
+No se registraron alucinaciones relevantes del modelo en esta sesión. Problemas detectados y su tratamiento:
+
+| Qué hizo mal | Causa raíz | Cómo se detectó | Cómo se corrigió |
+|---|---|---|---|
+| `ai-scribe` (1.er intento): la respuesta se cortó y la entrada no llegó a escribirse | Respuesta incompleta del modelo | Falta de la entrada al cerrar la tarea | Se reanudó la sesión y se reescribió esta entrada |
+| `flow-reviewer` validó el enmascaramiento sobre la copia importada en la instancia y no sobre el JSON del repo | El `jsCode` se trunca al leerlo del JSON del repo (limitación de lectura, no del código) | Al leer `workflows/005-error-workflow.json` | Se validó contra el borrador `9JXk22pXHSDwT19U` de la instancia (y el fix sincronizó repo e instancia) |
+| `pytest` ausente en el Python del sistema | Entorno local incompleto | Al ejecutar los tests del backend | Se ejecutaron con `uv run --with-requirements`; sin modificar tests ni probar el flujo para que pase |
+| `validate_workflow` del MCP rechaza JSON exportado (solo acepta código SDK) | Diseño del MCP n8n-mcp | Al intentar validar el grafo completo con el MCP | Se validaron los 4 nodos con `validate_node_config` y la estructura/grafo con `scripts/validate_workflows.py` del repo |
+
+### Decisiones
+
+| Propuesta | Decisión | Por qué |
+|---|---|---|
+| Mantener `.opencode/opencode.jsonc` (modificado) fuera de esta PR | Aceptada | Cambio de infraestructura no relacionado con la HU; el humano decide más adelante si se commitea aparte |
+| `flow-builder` aplicó el fix del reviewer | Aceptada | Spec 005 Aprobada + confirmación humana de levifvy (ADR-0002, D10) |
+| Sincronizar el borrador de la instancia vía `update_workflow` | Aceptada | Mantener n8n y repo alineados; sin activar ni publicar (regla 3) |
+| Credencial «Gmail account» (id `JRceb88QuejfOdfA`, la misma que usa el flujo 001) | Modificada: renombrar a «Gmail tienda» en la UI de n8n | Es una acción de credenciales de la instancia, no del JSON; no se toca n8n más allá del borrador del flujo |
+| Push / PR / activación final | Aceptada: quedan en manos del humano (regla 4) | El agente no hace push ni activa flujos |
+
+### Siguientes pasos
+
+- Commitear el fix (`workflows/005-error-workflow.json`, fixtures, `tasks.md`), push de la rama y abrir la PR (humano).
+- En la UI de n8n: renombrar la credencial a «Gmail tienda» (unificar el nombre con el resto), cambiar el destinatario por el correo real (el fijo de Levi y el del sticky), asignar `[ERR]` como Error Workflow en los Settings del resto de flujos (CA-3) y activarlo al final (última decisión del humano).
+- Probar el aviso en condiciones reales: el Error Trigger no se dispara en ejecuciones manuales; forzar un fallo en producción de un flujo de prueba.
+- Eliminar el flujo duplicado de `[000]` + `[001]` (id `KfQpai0qg9BtrmVr`) de la instancia.
