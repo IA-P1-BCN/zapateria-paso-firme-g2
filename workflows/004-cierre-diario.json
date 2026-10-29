@@ -1,0 +1,444 @@
+{
+  "name": "[004] Cierre diario",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 21,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "id": "004-node-01-schedule-trigger",
+      "name": "Cada noche",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "004-assign-fecha",
+              "name": "fecha",
+              "value": "={{ $now.setZone('Europe/Madrid').toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "004-node-02-fecha-de-hoy",
+      "name": "Fecha de hoy",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://tienda:8000/api/ventas",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "desde",
+              "value": "={{ $json.fecha }}"
+            },
+            {
+              "name": "hasta",
+              "value": "={{ $json.fecha }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "004-node-03-pedir-ventas",
+      "name": "Pedir ventas del día",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "API tienda"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://tienda:8000/api/abonos",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "desde",
+              "value": "={{ $('Fecha de hoy').first().json.fecha }}"
+            },
+            {
+              "name": "hasta",
+              "value": "={{ $('Fecha de hoy').first().json.fecha }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "004-node-04-pedir-abonos",
+      "name": "Pedir abonos del día",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "API tienda"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Suma las ventas directas y los abonos del día por forma de pago (efectivo, tarjeta, bizum).\n// Nunca redondea los sumandos individuales de la app; solo redondea cada total resultante a 2 decimales (ADR-0002, D6).\n\nconst fecha = $('Fecha de hoy').first().json.fecha;\nconst itemsVentas = $('Pedir ventas del día').all();\nconst itemsAbonos = $('Pedir abonos del día').all();\n\nconst ventas = itemsVentas\n  .map((item) => item.json)\n  .filter((v) => v && v.id !== undefined && v.importe !== undefined);\n\nconst abonos = itemsAbonos\n  .map((item) => item.json)\n  .filter((a) => a && a.id !== undefined && a.importe !== undefined);\n\nconst rawVentas = { efectivo: 0, tarjeta: 0, bizum: 0 };\nfor (const v of ventas) {\n  if (rawVentas[v.forma_pago] !== undefined) {\n    rawVentas[v.forma_pago] += Number(v.importe);\n  }\n}\n\nconst rawAbonos = { efectivo: 0, tarjeta: 0, bizum: 0 };\nfor (const a of abonos) {\n  if (rawAbonos[a.forma_pago] !== undefined) {\n    rawAbonos[a.forma_pago] += Number(a.importe);\n  }\n}\n\nconst round2 = (n) => Math.round(n * 100) / 100;\n\nconst ventas_efectivo = round2(rawVentas.efectivo);\nconst ventas_tarjeta = round2(rawVentas.tarjeta);\nconst ventas_bizum = round2(rawVentas.bizum);\nconst total_ventas = round2(rawVentas.efectivo + rawVentas.tarjeta + rawVentas.bizum);\n\nconst abonos_efectivo = round2(rawAbonos.efectivo);\nconst abonos_tarjeta = round2(rawAbonos.tarjeta);\nconst abonos_bizum = round2(rawAbonos.bizum);\nconst total_abonos = round2(rawAbonos.efectivo + rawAbonos.tarjeta + rawAbonos.bizum);\n\nconst total_efectivo = round2(rawVentas.efectivo + rawAbonos.efectivo);\nconst total_tarjeta = round2(rawVentas.tarjeta + rawAbonos.tarjeta);\nconst total_bizum = round2(rawVentas.bizum + rawAbonos.bizum);\nconst total_general = round2(\n  rawVentas.efectivo +\n    rawVentas.tarjeta +\n    rawVentas.bizum +\n    rawAbonos.efectivo +\n    rawAbonos.tarjeta +\n    rawAbonos.bizum\n);\n\nconst num_ventas = ventas.length;\nconst num_abonos = abonos.length;\nconst num_movimientos = num_ventas + num_abonos;\nconst sinMovimientos = num_movimientos === 0;\n\nconst fmt = (n) =>\n  new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);\n\nconst fechaEs = typeof DateTime !== 'undefined' && fecha\n  ? DateTime.fromISO(fecha).toFormat('dd/MM/yyyy')\n  : fecha;\n\nconst asunto_correo = sinMovimientos\n  ? `[Paso Firme] Cierre diario ${fechaEs} — Hoy no hubo movimientos`\n  : `[Paso Firme] Cierre diario ${fechaEs} — Total: ${fmt(total_general)}`;\n\nconst tablaResumen = [\n  `Ventas directas (${num_ventas}):`,\n  `  - Efectivo: ${fmt(ventas_efectivo)}`,\n  `  - Tarjeta: ${fmt(ventas_tarjeta)}`,\n  `  - Bizum: ${fmt(ventas_bizum)}`,\n  `  - Subtotal ventas: ${fmt(total_ventas)}`,\n  ``,\n  `Abonos de apartados (${num_abonos}):`,\n  `  - Efectivo: ${fmt(abonos_efectivo)}`,\n  `  - Tarjeta: ${fmt(abonos_tarjeta)}`,\n  `  - Bizum: ${fmt(abonos_bizum)}`,\n  `  - Subtotal abonos: ${fmt(total_abonos)}`,\n  ``,\n  `Total por forma de pago (${num_movimientos} movimientos):`,\n  `  - Efectivo: ${fmt(total_efectivo)}`,\n  `  - Tarjeta: ${fmt(total_tarjeta)}`,\n  `  - Bizum: ${fmt(total_bizum)}`,\n  `  - TOTAL GENERAL: ${fmt(total_general)}`\n].join('\\n');\n\nconst cuerpo_correo = sinMovimientos\n  ? `Hola Marisa,\\n\\nResumen del cierre diario del ${fechaEs}:\\n\\nHoy no hubo movimientos.\\n\\n${tablaResumen}\\n\\nUn saludo,\\nZapatería Paso Firme`\n  : `Hola Marisa,\\n\\nResumen del cierre diario del ${fechaEs}:\\n\\n${tablaResumen}\\n\\nUn saludo,\\nZapatería Paso Firme`;\n\nreturn [\n  {\n    json: {\n      fecha,\n      sinMovimientos,\n      num_ventas,\n      num_abonos,\n      num_movimientos,\n      ventas_efectivo,\n      ventas_tarjeta,\n      ventas_bizum,\n      total_ventas,\n      abonos_efectivo,\n      abonos_tarjeta,\n      abonos_bizum,\n      total_abonos,\n      total_efectivo,\n      total_tarjeta,\n      total_bizum,\n      total_general,\n      asunto_correo,\n      cuerpo_correo\n    }\n  }\n];\n"
+      },
+      "id": "004-node-05-sumar-por-forma-de-pago",
+      "name": "Sumar por forma de pago",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $vars.GOOGLE_SHEETS_CIERRES_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Cierres",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha": "={{ $json.fecha }}",
+            "ventas_efectivo": "={{ $json.ventas_efectivo }}",
+            "ventas_tarjeta": "={{ $json.ventas_tarjeta }}",
+            "ventas_bizum": "={{ $json.ventas_bizum }}",
+            "total_ventas": "={{ $json.total_ventas }}",
+            "abonos_efectivo": "={{ $json.abonos_efectivo }}",
+            "abonos_tarjeta": "={{ $json.abonos_tarjeta }}",
+            "abonos_bizum": "={{ $json.abonos_bizum }}",
+            "total_abonos": "={{ $json.total_abonos }}",
+            "total_efectivo": "={{ $json.total_efectivo }}",
+            "total_tarjeta": "={{ $json.total_tarjeta }}",
+            "total_bizum": "={{ $json.total_bizum }}",
+            "total_general": "={{ $json.total_general }}",
+            "num_movimientos": "={{ $json.num_movimientos }}"
+          },
+          "matchingColumns": [
+            "fecha"
+          ],
+          "schema": [
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ventas_efectivo",
+              "displayName": "ventas_efectivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "ventas_tarjeta",
+              "displayName": "ventas_tarjeta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "ventas_bizum",
+              "displayName": "ventas_bizum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "total_ventas",
+              "displayName": "total_ventas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "abonos_efectivo",
+              "displayName": "abonos_efectivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "abonos_tarjeta",
+              "displayName": "abonos_tarjeta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "abonos_bizum",
+              "displayName": "abonos_bizum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "total_abonos",
+              "displayName": "total_abonos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "total_efectivo",
+              "displayName": "total_efectivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "total_tarjeta",
+              "displayName": "total_tarjeta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "total_bizum",
+              "displayName": "total_bizum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "total_general",
+              "displayName": "total_general",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "num_movimientos",
+              "displayName": "num_movimientos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "004-node-06-guardar-cierre-sheets",
+      "name": "Guardar cierre en Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1340,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "Google Sheets tienda"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $vars.EMAIL_MARISA }}",
+        "subject": "={{ $('Sumar por forma de pago').first().json.asunto_correo }}",
+        "emailType": "text",
+        "message": "={{ $('Sumar por forma de pago').first().json.cuerpo_correo }}",
+        "options": {}
+      },
+      "id": "004-node-07-enviar-resumen-marisa",
+      "name": "Enviar resumen a Marisa",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1560,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "Gmail tienda"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cada noche": {
+      "main": [
+        [
+          {
+            "node": "Fecha de hoy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fecha de hoy": {
+      "main": [
+        [
+          {
+            "node": "Pedir ventas del día",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir ventas del día": {
+      "main": [
+        [
+          {
+            "node": "Pedir abonos del día",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir abonos del día": {
+      "main": [
+        [
+          {
+            "node": "Sumar por forma de pago",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sumar por forma de pago": {
+      "main": [
+        [
+          {
+            "node": "Guardar cierre en Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar cierre en Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Enviar resumen a Marisa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid",
+    "errorWorkflow": "[ERR] Avisos de error",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "versionId": "00400000-0000-4000-8000-000000000004",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

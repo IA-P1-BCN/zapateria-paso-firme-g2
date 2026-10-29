@@ -4,22 +4,22 @@
 
 | ID | Tarea | Tipo | Agente sugerido | Responsable | Depende de | Hecho cuando |
 |---|---|---|---|---|---|---|
-| T-004-01 | Decidir hora, histórico y canal; aprobar la spec | humano | — | <<PENDIENTE>> | — | `Estado: Aprobada` |
-| T-004-02 | Completar fixtures con totales esperados | agente | `test-designer` | <<PENDIENTE>> | 01 | Totales calculados a mano en los casos |
-| T-004-03 | Generar el JSON del flujo | agente | `flow-builder` | <<PENDIENTE>> | 02 | JSON válido, `"active": false` |
-| T-004-04 | Crear credenciales (Sheets, canal) y la hoja | humano | — | <<PENDIENTE>> | 01 | Hoja creada, credenciales en la UI |
-| T-004-05 | Probar con datos de ejemplo y comparar con la app | humano | — | <<PENDIENTE>> | 03, 04 | CA-1…CA-5 |
-| T-004-06 | Revisión automática | agente | `flow-reviewer`, `api-contract-checker` | <<PENDIENTE>> | 05 | APROBADO |
-| T-004-07 | PR y revisión humana | humano | — | <<PENDIENTE>> | 06 | PR aprobada |
-| T-004-08 | Bitácora | agente | `ai-scribe` | <<PENDIENTE>> | 07 | Entrada en `docs/ai-log.md` |
+| T-004-01 | Decidir hora (21:30), histórico (Google Sheets `Cierres`) y canal (Gmail); aprobar la spec | humano | — | Miguel Matesanz / Levi Flores | — | `Estado: Aprobada` en `spec.md` |
+| T-004-02 | Completar fixtures con totales esperados | agente | `test-designer` | Miguel Matesanz | T-004-01 | Totales calculados a mano en los casos (`F-004-1` a `F-004-3`) |
+| T-004-03 | Generar el JSON del flujo `workflows/004-cierre-diario.json` | agente | `flow-builder` | Miguel Matesanz | T-004-02 | JSON válido, `"active": false`, sin secretos |
+| T-004-04 | Crear credenciales (`API tienda`, Google Sheets, Gmail) y hoja `Cierres` en n8n | humano | — | Miguel Matesanz | T-004-01 | Credenciales en la UI y hoja creada con cabeceras |
+| T-004-05 | Probar con datos de ejemplo y comparar con la app | humano | — | Miguel Matesanz | T-004-03, T-004-04 | CA-1 a CA-5 verificados en n8n |
+| T-004-06 | Revisión automática | agente | `flow-reviewer`, `api-contract-checker` | Levi Flores | T-004-03 | Veredicto APROBADO |
+| T-004-07 | PR y revisión humana | humano | — | Levi Flores | T-004-05, T-004-06 | PR aprobada |
+| T-004-08 | Bitácora | agente | `ai-scribe` | Miguel Matesanz | T-004-06 | Entrada en `docs/ai-log.md` |
 
 ## Seguimiento
 
-- [ ] T-004-01
-- [ ] T-004-02
-- [ ] T-004-03
+- [x] T-004-01
+- [x] T-004-02
+- [x] T-004-03
 - [ ] T-004-04
 - [ ] T-004-05
-- [ ] T-004-06
+- [x] T-004-06
 - [ ] T-004-07
 - [ ] T-004-08
