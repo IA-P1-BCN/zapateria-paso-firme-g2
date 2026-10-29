@@ -26,6 +26,38 @@
     {
       "parameters": {
         "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "004-config-01",
+              "name": "MARISA_EMAIL",
+              "value": "<<CONFIGURAR_EN_N8N>>",
+              "type": "string"
+            },
+            {
+              "id": "004-config-02",
+              "name": "GOOGLE_SHEETS_CIERRES_ID",
+              "value": "<<CONFIGURAR_EN_N8N>>",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "004-node-00-configuracion",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        300
+      ],
+      "notes": "Configuración del flujo (sin valores reales en el repo). Rellenar en la UI: MARISA_EMAIL (destino del resumen) y GOOGLE_SHEETS_CIERRES_ID (id de la hoja de cálculo con la pestaña Cierres). Sustituye a $vars, que solo existe con licencia de n8n."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
         "duplicateItem": false,
         "assignments": {
           "assignments": [
@@ -45,7 +77,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        460,
+        680,
         300
       ]
     },
@@ -76,7 +108,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        680,
+        900,
         300
       ],
       "alwaysOutputData": true,
@@ -117,7 +149,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        900,
+        1120,
         300
       ],
       "executeOnce": true,
@@ -142,7 +174,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1120,
+        1340,
         300
       ]
     },
@@ -152,7 +184,7 @@
         "operation": "appendOrUpdate",
         "documentId": {
           "__rl": true,
-          "value": "={{ $vars.GOOGLE_SHEETS_CIERRES_ID }}",
+          "value": "={{ $('Configuración').first().json.GOOGLE_SHEETS_CIERRES_ID }}",
           "mode": "id"
         },
         "sheetName": {
@@ -317,7 +349,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1340,
+        1560,
         300
       ],
       "retryOnFail": true,
@@ -334,7 +366,7 @@
       "parameters": {
         "resource": "message",
         "operation": "send",
-        "sendTo": "={{ $vars.EMAIL_MARISA }}",
+        "sendTo": "={{ $('Configuración').first().json.MARISA_EMAIL }}",
         "subject": "={{ $('Sumar por forma de pago').first().json.asunto_correo }}",
         "emailType": "text",
         "message": "={{ $('Sumar por forma de pago').first().json.cuerpo_correo }}",
@@ -345,7 +377,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1560,
+        1780,
         300
       ],
       "retryOnFail": true,
@@ -364,7 +396,7 @@
       "main": [
         [
           {
-            "node": "Fecha de hoy",
+            "node": "Configuración",
             "type": "main",
             "index": 0
           }
@@ -420,6 +452,17 @@
         [
           {
             "node": "Enviar resumen a Marisa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "Fecha de hoy",
             "type": "main",
             "index": 0
           }

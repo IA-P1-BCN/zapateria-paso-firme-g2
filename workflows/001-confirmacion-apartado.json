@@ -24,7 +24,7 @@
             {
               "id": "c001-set-01",
               "name": "correo_tienda",
-              "value": "tienda@pasofirme.es",
+              "value": "tienda@pasofirme.example",
               "type": "string"
             }
           ]
@@ -65,11 +65,12 @@
           "conditions": [
             {
               "id": "c1",
-              "leftValue": "={{ $json.email || '' }}",
+              "leftValue": "={{ String($json.email ?? '').trim() }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
-                "operation": "notEmpty"
+                "operation": "notEmpty",
+                "singleValue": true
               }
             }
           ],
@@ -89,10 +90,14 @@
       "parameters": {
         "resource": "message",
         "operation": "send",
-        "sendTo": "={{ $json.email }}",
+        "sendTo": "={{ $json.email.trim() }}",
         "subject": "Confirmación de tu apartado · Paso Firme",
         "emailType": "html",
-        "message": "=<p>Hola <strong>{{ $json.cliente }}</strong>,</p>\n<p>Hemos registrado correctamente tu apartado <strong>#{{ $json.id }}</strong> en Zapatería Paso Firme.</p>\n<p><strong>Detalle de tu apartado:</strong></p>\n<ul>\n  <li><strong>Producto:</strong> {{ $json.detalle_producto }}</li>\n  <li><strong>Precio total:</strong> {{ $json.precio_formateado }}</li>\n  <li><strong>Abonado:</strong> {{ $json.abonado_formateado }}</li>\n  {{ $json.es_liquidado ? '' : '<li><strong>Pendiente:</strong> ' + $json.pendiente_formateado + '</li>' }}\n  <li><strong>Fecha límite para retirar:</strong> {{ $json.fecha_limite_formateada }}</li>\n</ul>\n{{ $json.es_liquidado ? '<p><strong>Ya está pagado: puedes recogerlo cuando quieras</strong></p>' : '<p>Recuerda que tienes hasta la fecha límite para completar los pagos restantes.</p>' }}\n<p>Gracias por confiar en Paso Firme.</p>"
+        "message": "=<p>Hola <strong>{{ $json.cliente }}</strong>,</p>\n<p>Hemos registrado correctamente tu apartado <strong>#{{ $json.id }}</strong> en Zapatería Paso Firme.</p>\n<p><strong>Detalle de tu apartado:</strong></p>\n<ul>\n  <li><strong>Producto:</strong> {{ $json.detalle_producto }}</li>\n  <li><strong>Precio total:</strong> {{ $json.precio_formateado }}</li>\n  <li><strong>Abonado:</strong> {{ $json.abonado_formateado }}</li>\n  {{ $json.es_liquidado ? '' : '<li><strong>Pendiente:</strong> ' + $json.pendiente_formateado + '</li>' }}\n  <li><strong>Fecha límite para retirar:</strong> {{ $json.fecha_limite_formateada }}</li>\n</ul>\n{{ $json.es_liquidado ? '<p><strong>Ya está pagado: puedes recogerlo cuando quieras</strong></p>' : '<p>Recuerda que tienes hasta la fecha límite para completar los pagos restantes.</p>' }}\n<p>Gracias por confiar en Paso Firme.</p>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Zapatería Paso Firme"
+        }
       },
       "id": "c001-gmail-cliente-04",
       "name": "Enviar confirmación al cliente",
@@ -119,7 +124,11 @@
         "sendTo": "={{ $json.correo_tienda }}",
         "subject": "=Aviso: Apartado #{{ $json.id }} sin correo",
         "emailType": "html",
-        "message": "=<p><strong>Aviso de no envío para la tienda (Marisa):</strong></p>\n<p>No se pudo enviar la confirmación del apartado <strong>#{{ $json.id }}</strong> porque el cliente <strong>{{ $json.cliente }}</strong> no tiene correo electrónico registrado.</p>\n<p><strong>Detalle:</strong></p>\n<ul>\n  <li><strong>Producto:</strong> {{ $json.detalle_producto }}</li>\n  <li><strong>Abonado:</strong> {{ $json.abonado_formateado }}</li>\n  <li><strong>Pendiente:</strong> {{ $json.pendiente_formateado }}</li>\n  <li><strong>Fecha límite:</strong> {{ $json.fecha_limite_formateada }}</li>\n</ul>"
+        "message": "=<p><strong>Aviso de no envío para la tienda (Marisa):</strong></p>\n<p>No se pudo enviar la confirmación del apartado <strong>#{{ $json.id }}</strong> porque el cliente <strong>{{ $json.cliente }}</strong> no tiene correo electrónico registrado.</p>\n<p><strong>Detalle:</strong></p>\n<ul>\n  <li><strong>Producto:</strong> {{ $json.detalle_producto }}</li>\n  <li><strong>Abonado:</strong> {{ $json.abonado_formateado }}</li>\n  <li><strong>Pendiente:</strong> {{ $json.pendiente_formateado }}</li>\n  <li><strong>Fecha límite:</strong> {{ $json.fecha_limite_formateada }}</li>\n</ul>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Zapatería Paso Firme"
+        }
       },
       "id": "c001-gmail-tienda-05",
       "name": "Avisar a la tienda: sin correo",
@@ -141,7 +150,7 @@
     },
     {
       "parameters": {
-        "content": "## [001] Confirmación de apartado\nSpec: specs/features/001-confirmacion-apartado/ (FL-01, HU-01). Se ejecuta desde `[000] Enrutador de eventos` con el apartado en la raíz.\n\n**Tras importar:**\n- Asignar la credencial Gmail OAuth2 `Gmail tienda` en los 2 nodos de envío.\n- Settings → Error workflow: `[ERR] Avisos de error` (en el JSON va `<<ASIGNAR_EN_N8N>>`).\n- `correo_tienda` en el nodo `Configuración` es orientativo: `<<PENDIENTE: dirección real de la tienda, la decide Levi>>`.",
+        "content": "## [001] Confirmación de apartado\nSpec: specs/features/001-confirmacion-apartado/ (FL-01, HU-01). Se ejecuta desde `[000] Enrutador de eventos` con el apartado en la raíz.\n\n**Tras importar:**\n- Asignar la credencial Gmail OAuth2 `Gmail tienda` en los 2 nodos de envío.\n- Settings → Error workflow: `[ERR] Avisos de error` (en el JSON va `<<ASIGNAR_EN_N8N>>`).\n- `correo_tienda` en el nodo `Configuración`: `tienda@pasofirme.example` (el mismo que `tienda_email` de `[002]`); en n8n se cambia por el buzón real.",
         "height": 320,
         "width": 440
       },

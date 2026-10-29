@@ -76,5 +76,5 @@ Redacción del mensaje con IA (nivel avanzado).
 
 - ~~Canal de mensajes~~ → resuelto: **Gmail** para cliente y tienda (`docs/prd-nivel-medio.md` §1; ADR-0002, D12).
 - **Remitente:** la cuenta de la credencial `Gmail tienda`.
-  `<<PENDIENTE: dirección real de la tienda (la crea Levi con el OAuth del equipo)>>`.
+  Aviso a la tienda: `correo_tienda` = `tienda@pasofirme.example` (el mismo que `tienda_email` de `002`); en n8n se pone el buzón real.
 - **Asunto (propuesto):** `Confirmación de tu apartado · Paso Firme`. El número de apartado va en el cuerpo, no en el asunto.

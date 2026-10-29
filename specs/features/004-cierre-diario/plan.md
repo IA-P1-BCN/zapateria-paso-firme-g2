@@ -12,6 +12,7 @@
 | # | Nodo | Tipo n8n | Qué hace |
 |---|---|---|---|
 | 1 | `Cada noche` | Schedule Trigger (`n8n-nodes-base.scheduleTrigger`) | Dispara el flujo todos los días a las 21:30 (`Europe/Madrid`) |
+| 1b | `Configuración` | Edit Fields / Set (`n8n-nodes-base.set`) | `MARISA_EMAIL` y `GOOGLE_SHEETS_CIERRES_ID`, rellenados en la UI (en el repo `<<CONFIGURAR_EN_N8N>>`). Sustituye a `$vars`, que sin licencia de n8n llega vacío (comprobado el 2026-10-29) |
 | 2 | `Fecha de hoy` | Edit Fields / Set (`n8n-nodes-base.set`) | Calcula `fecha` = `{{ $now.setZone('Europe/Madrid').toFormat('yyyy-MM-dd') }}` |
 | 3 | `Pedir ventas del día` | HTTP Request (`n8n-nodes-base.httpRequest`) | `GET http://tienda:8000/api/ventas?desde={{ $json.fecha }}&hasta={{ $json.fecha }}` con credencial `API tienda` y `alwaysOutputData: true` |
 | 4 | `Pedir abonos del día` | HTTP Request (`n8n-nodes-base.httpRequest`) | `GET http://tienda:8000/api/abonos?desde={{ $('Fecha de hoy').first().json.fecha }}&hasta={{ $('Fecha de hoy').first().json.fecha }}` con credencial `API tienda` y `alwaysOutputData: true` |
