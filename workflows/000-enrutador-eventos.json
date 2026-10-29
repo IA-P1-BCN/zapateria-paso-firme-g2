@@ -168,13 +168,35 @@
       ]
     },
     {
-      "parameters": {},
-      "id": "6ad66c7a-9fd7-4400-ad76-7249be89147a",
-      "name": "Recibo pendiente",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Desempaqueta el evento del webhook: pone `body.datos` (el apartado con el `importe` del abono)\n// en la raíz del item para que el sub-flujo [002] lo reciba PLANO desde su Execute Workflow Trigger\n// (id, cliente, email, producto, talla, precio, abonado, pendiente, estado, importe...)\nconst { body } = $json;\nreturn body?.datos ?? {};"
+      },
+      "id": "000-n-extract-003",
+      "name": "Extraer datos del abono",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         720,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "<<ASIGNAR_EN_N8N>>",
+          "mode": "list",
+          "cachedResultName": "<<ASIGNAR_EN_N8N: [002] Recibo de abono>>"
+        }
+      },
+      "id": "000-n-executar-004",
+      "name": "Llamar a recibo de abono",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        940,
         220
       ]
     },
@@ -213,8 +235,8 @@
     },
     {
       "parameters": {
-        "content": "## [000] Enrutador de eventos\nÚnico webhook de la app: `POST /webhook/tienda`. Reparte cada evento por su rama.\n\n**Tras importar:** en el nodo `Llamar a confirmación de apartado`, marca el workflow de destino `[001] Confirmación de apartado` (en el JSON va `<<ASIGNAR_EN_N8N>>` porque aún no se conoce su id).",
-        "height": 260,
+        "content": "## [000] Enrutador de eventos\nÚnico webhook de la app: `POST /webhook/tienda`. Reparte cada evento por su rama.\n\n**Tras importar** (en el JSON va `<<ASIGNAR_EN_N8N>>` porque los ids cambian en cada n8n):\n- `Llamar a confirmación de apartado` → `[001] Confirmación de apartado`\n- `Llamar a recibo de abono` → `[002] Recibo de abono`\n- Settings → Error workflow → `[ERR] Avisos de error`\n\n`venta.registrada` y `apartado.vencido` quedan sin flujo hasta que `[006]` y `[007]` tengan Execute Workflow Trigger (nivel medio).",
+        "height": 340,
         "width": 400
       },
       "id": "000-n-nota-001",
@@ -250,7 +272,7 @@
         ],
         [
           {
-            "node": "Recibo pendiente",
+            "node": "Extraer datos del abono",
             "type": "main",
             "index": 0
           }
@@ -288,11 +310,23 @@
           }
         ]
       ]
+    },
+    "Extraer datos del abono": {
+      "main": [
+        [
+          {
+            "node": "Llamar a recibo de abono",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "pinData": {},
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": "<<ASIGNAR_EN_N8N>>"
   },
   "staticData": null,
   "tags": []

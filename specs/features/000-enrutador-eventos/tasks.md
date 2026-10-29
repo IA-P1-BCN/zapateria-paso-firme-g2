@@ -22,7 +22,7 @@
 - [x] T-000-05
 - [ ] T-000-06
 - [x] T-000-07
-- [ ] T-000-08
+- [ ] T-000-08 · Cableado el 2026-10-29: `abono.registrado` → `[002]` y `settings.errorWorkflow` = `<<ASIGNAR_EN_N8N>>` (`[ERR]`). Importado en n8n local con los ids enlazados. Falta la prueba de extremo a extremo (publicar `[000]` y crear un apartado y un abono desde la app)
 
 ## Notas de revisión
 

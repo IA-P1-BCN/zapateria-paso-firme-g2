@@ -431,7 +431,7 @@
   "settings": {
     "executionOrder": "v1",
     "timezone": "Europe/Madrid",
-    "errorWorkflow": "[ERR] Avisos de error",
+    "errorWorkflow": "<<ASIGNAR_EN_N8N>>",
     "saveManualExecutions": true,
     "callerPolicy": "workflowsFromSameOwner"
   },
