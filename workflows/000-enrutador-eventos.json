@@ -135,13 +135,35 @@
       ]
     },
     {
-      "parameters": {},
-      "id": "d679eec2-f00c-4e37-a7e6-1cff5c8fcdf8",
-      "name": "Confirmación pendiente",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Desempaqueta el evento del webhook: pone `body.datos` (el apartado) en la raíz del item\n// para que el sub-flujo [001] reciba desde su Execute Workflow Trigger el apartado PLANO\n// (id, fecha, cliente, email, producto, talla, precio, abonado, pendiente, estado...)\nconst { body } = $json;\nreturn body?.datos ?? {};"
+      },
+      "id": "000-n-extract-001",
+      "name": "Extraer datos del apartado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         720,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "<<ASIGNAR_EN_N8N>>",
+          "mode": "list",
+          "cachedResultName": "<<ASIGNAR_EN_N8N: [001] Confirmación de apartado>>"
+        }
+      },
+      "id": "000-n-executar-002",
+      "name": "Llamar a confirmación de apartado",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        940,
         100
       ]
     },
@@ -188,6 +210,21 @@
         720,
         580
       ]
+    },
+    {
+      "parameters": {
+        "content": "## [000] Enrutador de eventos\nÚnico webhook de la app: `POST /webhook/tienda`. Reparte cada evento por su rama.\n\n**Tras importar:** en el nodo `Llamar a confirmación de apartado`, marca el workflow de destino `[001] Confirmación de apartado` (en el JSON va `<<ASIGNAR_EN_N8N>>` porque aún no se conoce su id).",
+        "height": 260,
+        "width": 400
+      },
+      "id": "000-n-nota-001",
+      "name": "Nota: cómo usar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -80
+      ]
     }
   ],
   "connections": {
@@ -206,7 +243,7 @@
       "main": [
         [
           {
-            "node": "Confirmación pendiente",
+            "node": "Extraer datos del apartado",
             "type": "main",
             "index": 0
           }
@@ -235,6 +272,17 @@
         [
           {
             "node": "Evento desconocido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer datos del apartado": {
+      "main": [
+        [
+          {
+            "node": "Llamar a confirmación de apartado",
             "type": "main",
             "index": 0
           }

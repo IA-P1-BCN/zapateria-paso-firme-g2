@@ -2,7 +2,7 @@
 
 # 001 · Confirmación de apartado — Plan
 
-- **Estado del plan:** Borrador (no se construye hasta que la spec esté `Aprobada`)
+- **Estado del plan:** Aprobado
 - **Flujo n8n:** `[001] Confirmación de apartado` → `workflows/001-confirmacion-apartado.json`
 
 ## 1. Diseño del flujo
@@ -12,8 +12,8 @@
 | 1 | `Recibir apartado creado` | Execute Workflow Trigger | Entrada desde `[000]` con `datos` |
 | 2 | `Formatear importes y fechas` | Set (o Code pequeño) | `79.9 → "79,90 €"`, `2027-01-18 → "18/01/2027"`; no cambia valores |
 | 3 | `¿Tiene correo?` | IF (`email` no vacío) | |
-| 4a | `Enviar confirmación al cliente` | <<PENDIENTE: Gmail / Send Email / Telegram>> | Plantilla con los campos de la spec |
-| 4b | `Avisar a la tienda: sin correo` | Gmail (Send) | Nº apartado + nombre |
+| 4a | `Enviar confirmación al cliente` | Gmail (operación *Send*) | Plantilla con los campos de la spec |
+| 4b | `Avisar a la tienda: sin correo` | Gmail (*Send*), misma credencial | Nº apartado + nombre |
 
 ## 2. Llamadas a la API de la tienda
 
@@ -23,8 +23,9 @@ Ninguna: el evento trae todo lo necesario.
 
 | Nombre en n8n | Tipo | Para qué |
 |---|---|---|
-| <<PENDIENTE: p. ej. `Correo tienda`>> | Gmail OAuth2 / SMTP | Enviar al cliente |
-| <<PENDIENTE: p. ej. `Telegram tienda`>> | Telegram API | Avisar a Marisa |
+| `Gmail tienda` | Gmail OAuth2 | Enviar al cliente y avisar a la tienda |
+
+Una sola credencial: el aviso de «sin correo» sale de la misma cuenta que la confirmación (ADR-0002, D12). No hay Telegram en esta feature.
 
 ## 4. Manejo de errores
 
