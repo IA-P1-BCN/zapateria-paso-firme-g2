@@ -1,0 +1,481 @@
+{
+  "name": "[008] Informe mensual",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months",
+              "monthsInterval": 1,
+              "triggerAtDayOfMonth": 1,
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "008-node-01-schedule-trigger",
+      "name": "Cada mes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Calcula el primer y último día del mes anterior en la zona horaria configurada (Europe/Madrid).\nconst tz = ($vars && $vars.ZONA_HORARIA) ? $vars.ZONA_HORARIA : 'Europe/Madrid';\nconst hoy = $now.setZone(tz);\nconst anterior = hoy.minus({ months: 1 });\nconst desde = anterior.startOf('month').toFormat('yyyy-MM-dd');\nconst hasta = anterior.endOf('month').toFormat('yyyy-MM-dd');\nconst mes = anterior.toFormat('yyyy-MM');\nreturn [{ json: { desde, hasta, mes, zona: tz } }];"
+      },
+      "id": "008-node-02-calcular-mes-anterior",
+      "name": "Calcular mes anterior",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://tienda:8000/api/ventas",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "desde",
+              "value": "={{ $('Calcular mes anterior').first().json.desde }}"
+            },
+            {
+              "name": "hasta",
+              "value": "={{ $('Calcular mes anterior').first().json.hasta }}"
+            }
+          ]
+        }
+      },
+      "id": "008-node-03-pedir-ventas",
+      "name": "Pedir ventas del mes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "API tienda"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://tienda:8000/api/abonos",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "desde",
+              "value": "={{ $('Calcular mes anterior').first().json.desde }}"
+            },
+            {
+              "name": "hasta",
+              "value": "={{ $('Calcular mes anterior').first().json.hasta }}"
+            }
+          ]
+        }
+      },
+      "id": "008-node-04-pedir-abonos",
+      "name": "Pedir abonos del mes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "API tienda"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://tienda:8000/api/apartados",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "estado",
+              "value": "activo"
+            }
+          ]
+        }
+      },
+      "id": "008-node-05-pedir-activos",
+      "name": "Pedir apartados activos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "API tienda"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://tienda:8000/api/apartados",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "008-node-06-pedir-todos",
+      "name": "Pedir todos los apartados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "API tienda"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://tienda:8000/api/vales",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "008-node-07-pedir-vales",
+      "name": "Pedir vales",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "API tienda"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Emite un item por cada apartado con estado = liquidado.\nconst salida = [];\nfor (const item of ($('Pedir todos los apartados') && $('Pedir todos los apartados').all()) ? $('Pedir todos los apartados').all() : []) {\n  const a = item.json;\n  if (a && a.estado === 'liquidado' && a.id !== undefined) {\n    salida.push({ json: a });\n  }\n}\nif (salida.length === 0) {\n  salida.push({ json: { id: null, _dummy: true } });\n}\nreturn salida;"
+      },
+      "id": "008-node-08-filtrar-liquidados",
+      "name": "Filtrar liquidados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://tienda:8000/api/apartados/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "008-node-09-pedir-detalle",
+      "name": "Pedir detalle de liquidados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        300
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "API tienda"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Agrega ventas, abonos, pendiente de activos, nuevos (por fecha), liquidados (por ultimo abono) y vencidos (por vale).\n// Solo redondea los totales a 2 decimales; los sumandos no se alteran (ADR-0002, D6).\nconst calc = $('Calcular mes anterior').first().json;\nconst desde = calc.desde;\nconst hasta = calc.hasta;\nconst mes = calc.mes;\n\nconst enMes = (f) => typeof f === 'string' && f >= desde && f <= hasta;\n\nconst ventasItems = $('Pedir ventas del mes').all()\n  .map((i) => i.json)\n  .filter((v) => v && v.importe !== undefined && v.fecha);\nconst abonosItems = $('Pedir abonos del mes').all()\n  .map((i) => i.json)\n  .filter((a) => a && a.importe !== undefined && a.fecha);\nconst activosItems = $('Pedir apartados activos').all()\n  .map((i) => i.json)\n  .filter((a) => a && a.pendiente !== undefined);\nconst todosItems = $('Pedir todos los apartados').all()\n  .map((i) => i.json)\n  .filter((a) => a && a.id !== undefined && a.fecha);\nconst valesItems = $('Pedir vales').all()\n  .map((i) => i.json)\n  .filter((v) => v && v.fecha);\n\nconst detalleItems = $input.all().map((i) => i.json);\n\nconst round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;\n\nconst rawVentas = ventasItems.reduce((s, v) => s + Number(v.importe), 0);\nconst rawAbonos = abonosItems.reduce((s, a) => s + Number(a.importe), 0);\nconst rawPendiente = activosItems.reduce((s, a) => s + Number(a.pendiente), 0);\n\nconst totalVentas = round2(rawVentas);\nconst totalAbonos = round2(rawAbonos);\nconst totalRecaudacion = round2(rawVentas + rawAbonos);\nconst pendienteTotal = round2(rawPendiente);\n\nconst nuevos = todosItems.filter((a) => enMes(a.fecha)).length;\n\nconst vencidosIds = new Set();\nfor (const v of valesItems) {\n  if (enMes(v.fecha) && v.apartado_id !== undefined) {\n    vencidosIds.add(v.apartado_id);\n  }\n}\nconst vencidos = vencidosIds.size;\n\nlet liquidados = 0;\nconst avisos = [];\nfor (const d of detalleItems) {\n  if (!d || typeof d !== 'object') continue;\n  if (d._dummy || d.id === null || d.id === undefined) continue;\n  if (d.error || (typeof d.statusCode === 'number' && d.statusCode >= 400)) {\n    const det = (d.error && d.error.response && d.error.response.body && d.error.response.body.detail)\n      || d.detail || d.message || 'detalle inaccesible';\n    avisos.push('Apartado ' + (d.id || '?') + ': ' + det);\n    continue;\n  }\n  if (d.id === undefined && d.abonos === undefined) continue;\n  const abonos = Array.isArray(d.abonos) ? d.abonos : [];\n  if (abonos.length === 0) continue;\n  const fechas = abonos.map((a) => a.fecha).filter(Boolean);\n  if (fechas.length === 0) continue;\n  const ultimo = fechas.reduce((max, f) => (f > max ? f : max), fechas[0]);\n  if (enMes(ultimo)) liquidados += 1;\n}\n\nconst MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];\nconst partes = mes.split('-');\nconst mesNombre = MESES[parseInt(partes[1], 10) - 1] + ' ' + partes[0];\n\nconst fmt = (n) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);\n\nconst sinMovimientos = (ventasItems.length === 0 && abonosItems.length === 0 && nuevos === 0 && liquidados === 0 && vencidos === 0);\nconst notaSinMov = sinMovimientos ? '<p>Sin movimientos en el mes.</p>' : '';\nconst notaAvisos = avisos.length ? '<p><strong>Avisos:</strong> ' + avisos.join('; ') + '</p>' : '';\n\nconst cuerpo = [\n  '<h2>Informe mensual · ' + mesNombre + '</h2>',\n  '<table border=\"1\" cellpadding=\"6\" cellspacing=\"0\" style=\"border-collapse:collapse\">',\n  '  <tr><th>Concepto</th><th>Valor</th></tr>',\n  '  <tr><td>Recaudación ventas directas</td><td>' + fmt(totalVentas) + '</td></tr>',\n  '  <tr><td>Recaudación abonos</td><td>' + fmt(totalAbonos) + '</td></tr>',\n  '  <tr><td>Recaudación total</td><td>' + fmt(totalRecaudacion) + '</td></tr>',\n  '  <tr><td>Pendiente de cobro</td><td>' + fmt(pendienteTotal) + '</td></tr>',\n  '  <tr><td>Apartados nuevos</td><td>' + nuevos + '</td></tr>',\n  '  <tr><td>Apartados liquidados</td><td>' + liquidados + '</td></tr>',\n  '  <tr><td>Apartados vencidos</td><td>' + vencidos + '</td></tr>',\n  '</table>',\n  notaSinMov,\n  notaAvisos,\n].filter(Boolean).join('\\n');\n\nreturn [{\n  json: {\n    mes,\n    mes_nombre: mesNombre,\n    recaudacion_ventas: totalVentas,\n    recaudacion_abonos: totalAbonos,\n    recaudacion_total: totalRecaudacion,\n    pendiente_total: pendienteTotal,\n    apartados_nuevos: nuevos,\n    apartados_liquidados: liquidados,\n    apartados_vencidos: vencidos,\n    avisos,\n    asunto_correo: 'Informe mensual · ' + mesNombre,\n    cuerpo_correo: cuerpo,\n  }\n}];"
+      },
+      "id": "008-node-10-sumar-informe",
+      "name": "Sumar informe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $vars.MARISA_EMAIL }}",
+        "subject": "={{ $json.asunto_correo }}",
+        "emailType": "html",
+        "message": "={{ $json.cuerpo_correo }}",
+        "options": {}
+      },
+      "id": "008-node-11-enviar-informe",
+      "name": "Enviar informe a Marisa",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2440,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "<<ASIGNAR_EN_N8N>>",
+          "name": "Gmail tienda"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "if-liquidado-real",
+              "leftValue": "={{ $json.id !== null && !$json._dummy }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "008-node-08b-if-liquidado-real",
+      "name": "¿Hay liquidado real?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1950,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Cada mes": {
+      "main": [
+        [
+          {
+            "node": "Calcular mes anterior",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular mes anterior": {
+      "main": [
+        [
+          {
+            "node": "Pedir ventas del mes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir ventas del mes": {
+      "main": [
+        [
+          {
+            "node": "Pedir abonos del mes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir abonos del mes": {
+      "main": [
+        [
+          {
+            "node": "Pedir apartados activos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir apartados activos": {
+      "main": [
+        [
+          {
+            "node": "Pedir todos los apartados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir todos los apartados": {
+      "main": [
+        [
+          {
+            "node": "Pedir vales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir vales": {
+      "main": [
+        [
+          {
+            "node": "Filtrar liquidados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar liquidados": {
+      "main": [
+        [
+          {
+            "node": "¿Hay liquidado real?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir detalle de liquidados": {
+      "main": [
+        [
+          {
+            "node": "Sumar informe",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sumar informe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sumar informe": {
+      "main": [
+        [
+          {
+            "node": "Enviar informe a Marisa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay liquidado real?": {
+      "main": [
+        [
+          {
+            "node": "Pedir detalle de liquidados",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sumar informe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid",
+    "errorWorkflow": "[ERR] Avisos de error",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "versionId": "00800000-0000-4000-8000-000000000008",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
