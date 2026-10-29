@@ -359,7 +359,7 @@
     },
     {
       "parameters": {
-        "modelName": "<<ELEGIR_EN_N8N>>",
+        "modelName": "models/gemini-3.5-flash-lite",
         "options": {
           "temperature": 0
         }
@@ -768,22 +768,7 @@
         3540,
         120
       ],
-      "notes": "Nodo añadido (el plan no tenía dónde separar 401 de 404/422). Código HTTP leído de $json.error.httpCode (NodeApiError en n8n 1.x/2.x), con alternativas $json.error.status / statusCode / los 3 primeros dígitos de $json.error.message. Sí (404/422) → aviso a Marisa con el detail. No (401 u otro) → Detener por error de la API."
-    },
-    {
-      "parameters": {
-        "errorType": "errorMessage",
-        "errorMessage": "={{ Number($json.error?.httpCode ?? $json.error?.status ?? $json.error?.statusCode ?? (String($json.error?.message ?? '').match(/^\\d{3}/) || [])[0] ?? 0) === 401 ? 'Error de configuración de la API: revisa la credencial API tienda' : 'Error inesperado de la API al registrar el abono (código ' + Number($json.error?.httpCode ?? $json.error?.status ?? $json.error?.statusCode ?? (String($json.error?.message ?? '').match(/^\\d{3}/) || [])[0] ?? 0) + '). El correo queda en_proceso: revísalo a mano.' }}"
-      },
-      "id": "fdd7e32f-e021-5376-8381-9b3184ddb595",
-      "name": "Detener por error de la API",
-      "type": "n8n-nodes-base.stopAndError",
-      "typeVersion": 1,
-      "position": [
-        3760,
-        220
-      ],
-      "notes": "Nodo añadido. Detiene la ejecución para que actúe el Error Workflow [ERR] Avisos de error. Sin reintentos ni bucles; el correo queda en_proceso. Sin secretos en el mensaje."
+      "notes": "Código HTTP leído de $json.error.httpCode (NodeApiError en n8n 1.x/2.x), con alternativas $json.error.status / statusCode / los 3 primeros dígitos de $json.error.message. Las dos salidas van a «Avisar a Marisa: no se pudo registrar»: 404/422 con el detail de la app; 401 u otro código con el mensaje del error. Así un fallo de la API no detiene el bucle y el resto de correos del mismo sondeo se procesan; el correo queda «rechazado». Se mantiene el IF para distinguir los casos si más adelante se quiere tratar el 401 aparte."
     },
     {
       "parameters": {
@@ -1280,7 +1265,7 @@
         ],
         [
           {
-            "node": "Detener por error de la API",
+            "node": "Avisar a Marisa: no se pudo registrar",
             "type": "main",
             "index": 0
           }
@@ -1354,7 +1339,7 @@
   "settings": {
     "executionOrder": "v1",
     "timezone": "Europe/Madrid",
-    "errorWorkflow": "<<ID_DE_[ERR]_AVISOS_DE_ERROR>>",
+    "errorWorkflow": "<<ASIGNAR_EN_N8N>>",
     "saveManualExecutions": true,
     "callerPolicy": "workflowsFromSameOwner"
   },

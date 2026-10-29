@@ -25,8 +25,8 @@
 | 13 | `¿Cuántos candidatos?` | Switch | 0 → desconocido · 1 → seguir · >1 → dudoso. Ordenante con solo apellido+inicial y sin concepto → dudoso |
 | 14 | `¿Se puede abonar?` | IF | Comprobación previa con datos de la app: `importe ≤ pendiente` y hoy (`ZONA_HORARIA`) ≤ `fecha_limite`. No sustituye a la app: es para dar un motivo claro |
 | 15 | `Registrar abono en la app` | HTTP Request `POST /api/apartados/{id}/abonos` `{importe, forma_pago: "bizum"}` (sin `fecha`) · On Error → Continue (error output) | |
-| 15b | `¿Error de negocio de la API?` | IF | Salida de error del POST: 422/404 → `Avisar a Marisa: no se pudo registrar` con `detail`; otro código (401…) → 15c |
-| 15c | `Detener por error de la API` | Stop and Error | Mensaje sin secretos; activa `[ERR] Avisos de error`. El correo queda `en_proceso` |
+| 15b | `¿Error de negocio de la API?` | IF | Salida de error del POST: 422/404 → `Avisar a Marisa: no se pudo registrar` con `detail`; otro código (401…) → también `Avisar a Marisa: no se pudo registrar` con el mensaje del error. El correo queda `rechazado` |
+| ~~15c~~ | ~~`Detener por error de la API`~~ | ~~Stop and Error~~ | **Eliminado al probar en n8n (2026-10-29).** Detenía la ejecución y los demás correos del mismo sondeo no se procesaban nunca (Gmail no los vuelve a entregar). Ver §4 |
 | 16 | `¿Era transferencia?` | IF | Sí → `Avisar a Marisa: transferencia registrada`. No → fin (el recibo lo envía `002`) |
 | 17 | `Avisar a Marisa: transferencia registrada` | Gmail (Send) | Apartado, importe y que el origen era transferencia (ADR-0002, D12) |
 | 18 | `Preguntar a Marisa` | Gmail (Send) | Ordenante, importe, concepto, candidatos y motivo. Ella registra a mano en la app |
@@ -38,7 +38,7 @@
 | Método y ruta | Cuándo | Cuerpo / parámetros | Campos de respuesta que se usan |
 |---|---|---|---|
 | `GET /api/apartados` | Siempre que es pago | `estado=activo` (sin `pagina` → lista completa) | `id`, `cliente`, `producto`, `pendiente`, `fecha_limite`, `estado` |
-| `POST /api/apartados/{id}/abonos` | Un único candidato válido | `importe`, `forma_pago: "bizum"`. Sin `fecha` (la app usa hoy) | Respuesta `ApartadoOut`; errores 404/422 con `detail`; 401 → Error Workflow |
+| `POST /api/apartados/{id}/abonos` | Un único candidato válido | `importe`, `forma_pago: "bizum"`. Sin `fecha` (la app usa hoy) | Respuesta `ApartadoOut` (el apartado actualizado: `id`, `cliente`, `producto`, `abonado`, `pendiente`, `estado`); errores 404/422 con `detail`; 401 u otros → aviso a Marisa |
 
 ## 3. Credenciales y variables (solo nombres)
 
@@ -52,14 +52,23 @@
 
 ## 4. Manejo de errores
 
-- Error Workflow `[ERR] Avisos de error`.
-- `POST abonos` con salida de error: 422/404 → aviso a Marisa con `detail` (no es un fallo del flujo). 401 → se propaga al Error Workflow, sin reintentos.
+- Error Workflow `[ERR] Avisos de error` (`settings.errorWorkflow` = `<<ASIGNAR_EN_N8N>>` en el JSON; el id cambia en cada instancia). Solo actúa con el flujo activo, no en ejecuciones manuales.
+- `POST abonos` con salida de error: 422/404 → aviso a Marisa con `detail` (no es un fallo del flujo). 401 u otro código → también aviso a Marisa con el mensaje del error, sin reintentos; el correo queda `rechazado` y el bucle sigue con el siguiente correo.
+  - **Desviación (2026-10-29):** el plan inicial enviaba el 401 a `Detener por error de la API` (Stop and Error → Error Workflow). Se quitó porque cortaba el bucle: los demás correos del mismo sondeo se perdían. Contrapartida: un 401 (credencial `API tienda` mal) llega a Marisa como «Pago NO registrado» en vez de como fallo técnico; el texto incluye el mensaje de la app («Falta la cabecera X-API-Key o no es válida»).
 - Fallo del modelo de IA: Retry On Fail 2 veces; si sigue fallando → preguntar a Marisa.
-- Fallo a mitad: el correo queda `en_proceso` y no se vuelve a procesar solo (evita duplicados).
+- Fallo a mitad (Gmail, Data Table, caída de n8n): el correo queda `en_proceso` y no se vuelve a procesar solo (evita duplicados). Lo avisa el Error Workflow; la persona revisa en la app si el abono llegó a registrarse antes de hacerlo a mano.
 
 ## 5. Datos de prueba
 
-`fixtures.md`: los 9 correos de `data/correos/`, enviados por el flujo `[TEST]` con Form Trigger (o reenviados al buzón con la etiqueta `Banco`). Antes de probar, **reiniciar los datos** (`docker compose down -v && docker compose up -d`), porque los de ejemplo son relativos al día de arranque.
+`fixtures.md`: los 9 correos de `data/correos/`, enviados por el flujo `[TEST]` con Form Trigger (o reenviados al buzón con la etiqueta `Banco`). Antes de probar, **reiniciar los datos de la tienda**, porque los de ejemplo son relativos al día de arranque. **No usar `docker compose down -v`**: borra también el volumen `n8n_data` (flujos, credenciales y la Data Table `Emails`). Reiniciar solo la tienda:
+
+```bash
+docker compose rm -sf tienda
+docker volume rm zapateria-paso-firme-g2_tienda_data
+docker compose up -d tienda
+```
+
+Con Gmail real, la ejecución manual del Gmail Trigger solo coge el **último** correo con la etiqueta `Banco`: probar los correos de uno en uno, y vaciar la Data Table `Emails` antes de cada tanda.
 
 ## 6. Riesgos y decisiones
 
@@ -168,7 +177,7 @@ El Code no recalcula nada de la app ni consulta la API; solo compara la salida d
 | Temperatura | 0 |
 | Retry On Fail | Sí, 2 intentos (n8n-convenciones) |
 | Require Specific Output Format | Sí (Structured Output Parser de §7.3) |
-| Modelo y credencial | *Google Gemini Chat Model*, credencial `IA extracción` (capa gratuita). <<PENDIENTE: modelo concreto, se elige al crear la credencial (T-003-06)>> |
+| Modelo y credencial | *Google Gemini Chat Model* con `models/gemini-3.5-flash-lite` (elegido en T-003-06: el más barato y rápido para extraer seis campos), credencial `IA extracción` (capa gratuita) |
 | Datos enviados al modelo | Solo asunto y cuerpo (§7.2) |
 
 ### 7.6 Extracción esperada / obtenida (correos de `data/correos/`)
