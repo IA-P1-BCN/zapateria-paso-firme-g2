@@ -1,0 +1,134 @@
+{
+  "name": "[006] Aviso de ventas grandes",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "cronExpression": "*/15 * * * *",
+        "timezone": "Europe/Madrid"
+      },
+      "name": "Schedule Trigger (cada 15 min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250,300]
+    },
+    {
+      "parameters": {
+        "url": "http://tienda:8000/api/ventas?desde={{ $now.format('YYYY-MM-DD') }}&hasta={{ $now.format('YYYY-MM-DD') }}",
+        "method": "GET",
+        "responseFormat": "json",
+        "headerParametersUi": {
+          "parameter": [
+            {"name": "X-API-Key","value": "{{ $env.API_KEY }}"}
+          ]
+        }
+      },
+      "name": "Obtener ventas del día",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [500,300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {"name": "ventas_grandes","value": "{{ $json.filter(v => v.importe > 500) }}"}
+          ]
+        },
+        "options": {}
+      },
+      "name": "Filtrar ventas > 500",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [750,300]
+    },
+    {
+      "parameters": {
+        "operation": "find",
+        "table": "avisos_ventas_grandes",
+        "filters": [
+          {"field": "fecha","operation": "equal","value": "{{ $now.format('YYYY-MM-DD') }}"}
+        ]
+      },
+      "name": "Buscar avisos enviados hoy",
+      "type": "n8n-nodes-base.n8nDataTable",
+      "typeVersion": 1,
+      "position": [1000,300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {"value1": "{{ $json.ventas_grandes.length }}","operation": "greaterThan","value2": 0}
+          ]
+        }
+      },
+      "name": "¿Hay ventas grandes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250,200]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "subject": "Venta grande detectada",
+        "html": "<p>Se ha registrado una venta de <strong>{{ $json.importe }} €</strong> para el cliente {{ $json.cliente }} (ID {{ $json.id }}).</p>",
+        "toEmail": "{{ $json.email }}",
+        "additionalFields": {
+          "fromEmail": "{{ $env.GMAIL_SENDER }}"
+        }
+      },
+      "name": "Enviar email a Marisa",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [1500,200]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "avisos_ventas_grandes",
+        "additionalFields": {
+          "venta_id": "{{ $json.id }}",
+          "umbral": "500",
+          "fecha_aviso": "{{ $now.format('YYYY-MM-DD') }}"
+        }
+      },
+      "name": "Registrar aviso",
+      "type": "n8n-nodes-base.n8nDataTable",
+      "typeVersion": 1,
+      "position": [1750,200]
+    },
+    {
+      "parameters": {
+        "errorWorkflow": "005-error-workflow"
+      },
+      "name": "Manejo de errores",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [2500,300]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "url": "http://tienda:8000/webhook/venta", 
+        "responseFormat": "json",
+        "headerParametersUi": {"parameter": [{"name": "X-API-Key","value": "{{ $env.API_KEY }}"}]}
+      },
+      "name": "Webhook Trigger (optional)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250,500]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (cada 15 min)": {"main": [{"node": "Obtener ventas del día","type": "main","index": 0}]},
+    "Obtener ventas del día": {"main": [{"node": "Filtrar ventas > 500","type": "main","index": 0}]},
+    "Filtrar ventas > 500": {"main": [{"node": "Buscar avisos enviados hoy","type": "main","index": 0}]},
+    "Buscar avisos enviados hoy": {"main": [{"node": "¿Hay ventas grandes?","type": "main","index": 0}]},
+    "¿Hay ventas grandes?": {"main": [{"node": "Enviar email a Marisa","type": "main","index": 0}], "else": []},
+    "Enviar email a Marisa": {"main": [{"node": "Registrar aviso","type": "main","index": 0}]},
+    "Registrar aviso": {"main": []},
+    "Webhook Trigger (optional)": {"main": [{"node": "Filtrar ventas > 500","type": "main","index": 0}]},
+    "Manejo de errores": {"main": []}
+  }
+}
