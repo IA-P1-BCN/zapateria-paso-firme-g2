@@ -132,6 +132,92 @@ Proponer el diff de la spec (textos, bordes, credenciales) antes de aprobarla ev
 - Al importar: asignar la credencial `Correo tienda` y el errorWorkflow.
 - Revisión humana y aprobación de la PR #68 (T-002-06).
 
+## 2026-10-29 · HU-03 · #12 · Abonos a distancia: puesta en marcha en n8n y revisión de anomalías
+
+- **Persona responsable:** levifvy
+- **Herramienta y modelo:** Claude Code (app de escritorio) · Claude Opus 5.5 (`claude-opus-5-5`) como agente principal, conectado a la instancia local de n8n con el MCP de instancia (*Instance-level MCP*, HTTP en `localhost:5678`)
+- **Subagente / comando:** agente principal, sin subagentes. No se ha lanzado todavía `/revisar-flujo` (T-003-08)
+- **Rama / Spec / PR:** `feature/HU-03-abonos-a-distancia` · `specs/features/003-abonos-a-distancia/` · issue #12 · [PR #70](https://github.com/IA-P1-BCN/zapateria-paso-firme-g2/pull/70) (Draft, con cambios pedidos por BrianStiv) · commits previos `d9a2e80` y `f5d60aa` (2026-10-27) · merge de `develop` `6518b9b` · los cambios de esta sesión en el JSON, `plan.md` y esta bitácora están sin commitear
+
+### Prompt clave
+
+> «Analiza el flujo [003] Abonos a distancia y comprueba las anomalías», repetido después de cada cambio de configuración, y luego peticiones cortas para cada paso: conectar Claude Code con mi n8n, crear las credenciales, montar la Data Table, añadir el aviso de errores, traer `develop` y pasar al repo lo que había cambiado en n8n. Todo en sesiones de pregunta y respuesta, sin un prompt de orquestación largo como en la HU-02.
+
+### Resultado
+
+Empecé el 28 por la tarde con el flujo importado pero sin probar, y lo he dejado funcionando de punta a punta en mi n8n local:
+
+- **Limpieza:** en la instancia había dos `[003]`. Uno juntaba en la misma vista el enrutador, el recibo y el flujo de abonos (41 nodos); lo **archivé**, no lo borré, porque tenía el webhook `/webhook/tienda` que usa la app.
+- **Credenciales (T-003-06):**
+  - Gmail OAuth2 con la cuenta común de la tienda. Hubo que añadir la URI de redirección de n8n en Google Cloud, meter la cuenta común como usuario de prueba y habilitar la Gmail API.
+  - Gemini con una API key de AI Studio creada desde la cuenta común.
+  - `API tienda` como Header Auth `X-API-Key`. El agente encontró la cabecera leyendo `backend/middleware/seguridad.py`.
+- **Data Table `Emails`** creada con `message_id`, `fecha`, `estado` y `apartado_id`, y asignada en los tres nodos.
+- **Primeras ejecuciones manuales:**
+  - La ejecución 12 extrajo bien una transferencia de prueba, pero la lancé paso a paso y se quedó en `Pedir apartados activos`, dejando el correo en `en_proceso`. Borré la fila a mano.
+  - En la ejecución 13, la IA marcó como `no_pago` un correo mío sin importe y con «abono: efectivo». Acertó: el que estaba mal era mi correo de prueba.
+- **Cambios en el flujo:**
+  - Quité `Detener por error de la API` y llevé las dos salidas de `¿Error de negocio de la API?` al aviso a Marisa, para que un fallo de la API no corte el bucle.
+  - Asigné como Error Workflow el `[ERR] Avisos de error` oficial de develop (005), importado y con la credencial de Gmail puesta.
+- **Repo:** fusioné `origin/develop` (sin conflictos, 5/5 flujos válidos). Pasé al JSON y a `plan.md` los cambios de n8n: sin el nodo Detener, `errorWorkflow` = `<<ASIGNAR_EN_N8N>>` como en 001 y 002, modelo `models/gemini-3.5-flash-lite`, desviación explicada en §4 y aviso sobre `down -v` en §5. `validate_workflows.py --estricto`: 5/5 OK.
+- **Sin terminar:** las pruebas con los 9 correos. Los envié por Gmail, pero todavía no los he procesado (ver Siguientes pasos).
+
+### Errores o alucinaciones
+
+| Qué hizo mal | Causa raíz | Cómo se detectó | Cómo se corrigió |
+|---|---|---|---|
+| El agente pidió los detalles de dos workflows con IDs que **se inventó** (`4h5Da…`, `aJh4…`) en vez de los reales | Lanzó en paralelo la búsqueda y la consulta de detalles, y rellenó los IDs antes de tener el resultado | n8n respondió «Workflow not found» | Repitió la consulta con los IDs de la búsqueda (`lNUN…` y `zY37…`) |
+| Al principio propuso el conector de n8n del catálogo de Claude, que se conecta desde la nube y no puede llegar a `localhost` | No sabía que mi n8n es local en Docker | Al ver mi captura con `localhost:5678` | Cambió a añadir el MCP de instancia con `claude mcp add --transport http` |
+| Al comprobar la conexión imprimió en la conversación el token del MCP completo | Usó `claude mcp get n8n`, que muestra las cabeceras | Lo vio el propio agente en la salida | Me avisó de que quedaba en la sesión y de que lo regenerase si exporto la conversación. Después leyó el token del config sin imprimirlo |
+| Dio como ejemplo `avisos@tubanco.es` / `bizum@tubanco.es` para `BANCO_REMITENTES` y yo los copié tal cual en `Configuración` | Ejemplo poco marcado como ficticio | Lo detectó el agente al revisar lo guardado en n8n | Lo dejé solo con el remitente de las pruebas |
+| Creó su propio workflow de errores y lo llamó `[000] Avisos de error`, que choca con `[000] Enrutador de eventos` | No había mirado `workflows/README.md`, donde el de errores es `005` → `[ERR]` | Me di cuenta yo al ver el `000-enrutador-eventos.json` en el repo | Lo renombró a `[ERR]`; luego lo sustituimos por el oficial de develop y lo archivó |
+| La fixture y la PR dicen que se reinicien los datos con `docker compose down -v`, pero eso también borra el volumen de n8n (flujos, credenciales y la tabla `Emails`) | Instrucción escrita en la sesión del 27 pensando solo en la tienda | El agente revisó el `docker-compose.yml` antes de que lo ejecutara | Reinicio solo de la tienda (`rm -sf tienda` + `volume rm` + `up -d tienda`), ahora documentado en `plan.md` §5 |
+| El primer `n8n import:workflow` falló: Git Bash convirtió `/tmp/err.json` en una ruta de Windows | Conversión automática de rutas de MSYS | Error `ENOENT` en la salida | Repetido con `MSYS_NO_PATHCONV=1` |
+| Al importar el `[ERR]`, el agente no podía modificarlo | Los workflows importados no tienen el acceso MCP activado | Error «Workflow is not available in MCP» | Lo reimportó sobre el mismo ID desde una copia temporal con `availableInMCP: true`, sin tocar el archivo del repo |
+| Envié los 9 correos de prueba de golpe y Gmail parecía haber recibido «solo algunos» | Gmail agrupa los correos con el mismo asunto (01+05, 02+06, 03+07) y reparte el resto en pestañas; además, la ejecución manual del Gmail Trigger solo coge el último correo con la etiqueta | Revisando las ejecuciones (ninguna ese día) y la vista de la etiqueta `Banco` | Procesarlos de uno en uno moviendo la etiqueta `Banco`; para la próxima, añadir «(caso NN)» al asunto |
+| El visor de `.eml` de PyCharm mostraba `â□¬` en vez de `€` en el asunto | Los `.eml` no llevan cabeceras MIME y el visor lee el asunto como Latin-1 | Lo vi yo antes de enviar | El archivo está bien en UTF-8; el asunto se copia desde la pestaña *Text* |
+| `pytest` no instalado en el Python del sistema | Entorno local incompleto (igual que en la HU-02 y la HU-05) | Al ejecutar los tests | Pendiente de lanzarlos en el entorno `(zapateria)`; la CI ya los pasa |
+
+### Decisiones
+
+| Propuesta | Decisión | Por qué |
+|---|---|---|
+| Borrar el `[003]` duplicado de 41 nodos | Modificada: archivado | El MCP no permite borrar y, además, ese workflow tenía el webhook de la tienda y el envío de recibos |
+| Quitar `Detener por error de la API` | Aceptada (lo hice yo en n8n; el agente lo pasó al JSON y al plan) | Cortaba el bucle y se perdían los demás correos del mismo sondeo. Contrapartida apuntada en `plan.md` §4: un 401 le llega a Marisa como «Pago NO registrado» |
+| Mantener el IF `¿Error de negocio de la API?` con las dos salidas al mismo nodo | Aceptada de momento | Así el JSON coincide con mi n8n y se puede tratar el 401 aparte más adelante. Es posible que el revisor diga que sobra |
+| Reintentar solos los correos que quedan en `en_proceso` | Rechazada | Se podría registrar el mismo abono dos veces; mejor que avise el Error Workflow y lo revise una persona |
+| Usar el `[ERR]` que había creado el agente | Rechazada: se usa el oficial de develop (005) | Lo lleva otro compañero, enmascara datos personales (spec 005) y así no hay dos versiones |
+| `errorWorkflow` en el JSON | Modificada: `<<ASIGNAR_EN_N8N>>` en lugar de `<<ID_DE_[ERR]_AVISOS_DE_ERROR>>` | Es lo que usan 001 y 002; el ID cambia en cada instancia |
+| Modelo de IA | Aceptada: `models/gemini-3.5-flash-lite` | Suficiente para extraer seis campos y el más barato. Ojo con la capa gratuita y los datos de clientes (ya estaba en los riesgos de la PR) |
+| `API_KEY` del `.env` | Modificada: clave aleatoria de 64 caracteres | Tenía puesta por error una API key de mi cuenta de n8n. La tienda solo necesita un secreto compartido con la credencial `API tienda` |
+| Probar con Gmail real en vez del flujo `[TEST]` con Form Trigger | Aceptada para esta tanda | Ya tenía Gmail funcionando. Los casos F-003-11a/b siguen necesitando *Pin data* |
+| Fusionar `develop` antes de probar | Aceptada | No tocaba nada del 003 ni la tienda y traía el `[ERR]` oficial |
+
+### Trabajo descartado
+
+- El `[ERR] Avisos de error` creado por el agente (Error Trigger + Gmail, sin enmascarado): queda archivado en mi n8n.
+- Corregir el horario de revisión duplicado del Gmail Trigger en el JSON: solo existía en mi n8n; el JSON del repo ya estaba bien.
+
+### Mi prompt o la spec
+
+- No conocía bien las convenciones del repo (`workflows/README.md`, la spec 005, los nombres de credenciales). Habría ahorrado vueltas pedirle al agente que las leyera antes de crear nada.
+- La spec y la PR daban por hecho el flujo `[TEST]`, y yo acabé probando con Gmail. Hay que dejarlo claro en la PR.
+- Otras cosas que salieron al revisar la app (no son de esta HU): `controllers/paginas.py` envía la `API_KEY` al navegador en `window.APP_CONFIG`, y la clave nueva se vio completa en una captura de pantalla.
+
+### Lección
+
+Mirar las ejecuciones y la tabla `Emails` después de cada prueba vale más que fiarse de lo que se ve en Gmail. Y antes de ejecutar cualquier comando que venga de las fixtures o de la PR, conviene comprobar qué hace de verdad. El `down -v` me habría borrado todo n8n.
+
+### Siguientes pasos
+
+- **T-003-07:** procesar los 9 correos de uno en uno (más F-003-10, 11 y 12), rellenar la columna «Obtenido» de las evidencias de la PR y la tabla «Obtenida» de `plan.md` §7.6, y marcar T-003-04…07 en `tasks.md`.
+- **T-003-08:** `/revisar-flujo 003` cuando el JSON esté cerrado.
+- En n8n: renombrar las credenciales a `Gmail tienda` e `IA extracción` para que coincidan con el repo, y quitar la entrada vacía del horario del Gmail Trigger.
+- Cambiar otra vez la `API_KEY` (se vio en una captura) y actualizar la credencial `API tienda`.
+- Actualizar la descripción de la PR #70 (sigue hablando de *Stop and Error*), hacer commit y push de los 19 commits pendientes, pasarla a *Ready for review* y volver a pedir revisión a BrianStiv y mmatesanzg23.
+- Antes de producción: poner los remitentes reales del banco en `BANCO_REMITENTES` y el correo de Marisa en `MARISA_EMAIL`, y decidir con el equipo cuándo se activa el flujo (es decisión humana).
+- Decidir qué hacer con el webhook `/webhook/tienda` (enrutador `[000]`) en mi instancia, para que los recibos de la HU-02 funcionen junto con este flujo.
+
 ## 2026-10-29 · HU-05 · Avisos de error (spec 005 → flujo → revisión MCP)
 
 - **Persona responsable:** levifvy
@@ -177,3 +263,65 @@ No se registraron alucinaciones relevantes del modelo en esta sesión. Problemas
 - En la UI de n8n: renombrar la credencial a «Gmail tienda» (unificar el nombre con el resto), cambiar el destinatario por el correo real (el fijo de Levi y el del sticky), asignar `[ERR]` como Error Workflow en los Settings del resto de flujos (CA-3) y activarlo al final (última decisión del humano).
 - Probar el aviso en condiciones reales: el Error Trigger no se dispara en ejecuciones manuales; forzar un fallo en producción de un flujo de prueba.
 - Eliminar el flujo duplicado de `[000]` + `[001]` (id `KfQpai0qg9BtrmVr`) de la instancia.
+
+## 2026-10-29 · HU-03 · T-003-07 · Abonos a distancia: prueba con los 9 correos del banco
+
+- **Persona responsable:** levifvy
+- **Herramienta y modelo:** Claude Code (app de escritorio) · Claude Opus 5.5 (`claude-opus-5-5`), con el MCP de instancia de n8n para leer las ejecuciones y la Data Table. En el flujo, Gemini `models/gemini-3.5-flash-lite`
+- **Subagente / comando:** agente principal, sin subagentes. `/revisar-flujo` (T-003-08) todavía pendiente
+- **Rama / Spec / PR:** `feature/HU-03-abonos-a-distancia` · `specs/features/003-abonos-a-distancia/` · issue #12 · [PR #70](https://github.com/IA-P1-BCN/zapateria-paso-firme-g2/pull/70)
+
+### Prompt clave
+
+> «Ya hice la ejecución de todos los correos, ¿qué sigue para que la PR pueda ser aprobada?». Antes de eso, una ronda de preguntas cortas mientras probaba: por qué no llegaban los correos, cómo identificar cada uno en Gmail y cómo dejar solo uno con la etiqueta `Banco`.
+
+### Resultado
+
+Reinicié solo la tienda, vacié la Data Table `Emails` y probé los 9 `.eml` reenviándolos desde mi cuenta al buzón de la tienda. Los procesé de uno en uno: ponía la etiqueta `Banco` a un correo y lanzaba *Execute workflow*. El agente revisó cada ejecución por MCP y comparó con la API de la tienda.
+
+| Caso | Ejec. | Resultado | ¿Esperado? |
+|---|---|---|---|
+| F-003-1 Carmen | 14 | Registra 10 € (apartado 1: 19,50 → 9,50) | ✅ |
+| F-003-2 Jorge | 15 | Registra 20 € por la referencia «apartado 2» (79 → 59) | ✅ |
+| F-003-3 Lucía | 16 | Registra 12 € como `bizum`, queda **liquidado**; aviso de transferencia a Marisa | ✅ |
+| F-003-4 Laura | 17 | No registra (15 € > 10 € pendientes); aviso a Marisa; `rechazado` · 12 | ✅ |
+| F-003-5 Romero | 18 | No registra; pregunta a Marisa; `dudoso` | ✅ (motivo distinto, ver abajo) |
+| F-003-6 Paula | 19 | No registra (plazo vencido); aviso a Marisa; `rechazado` · 16 | ✅ |
+| F-003-7 Antonio | 20 | No registra (cliente desconocido); pregunta a Marisa; `dudoso` | ✅ |
+| F-003-8 Publicidad | 21 | `no_pago` → `ignorado`, sin aviso | ✅ |
+| F-003-9 Silvia | 22 | Registra 5 € aunque en la app lleva tilde (35 → 30) | ✅ |
+| F-003-10 Duplicado | 23 | `¿Ya procesado?` → sí; no llama a la IA ni a la API | ✅ |
+
+En la tienda solo aparecen abonos nuevos en los apartados 1, 2, 3 y 24. Se mandaron los 5 avisos a Marisa que tocaban. F-003-11a/b y F-003-12 no los hice porque el briefing solo pide que el flujo resuelva bien los correos de `data/correos/`; quedan pendientes en la PR.
+
+### Errores o alucinaciones
+
+La IA de extracción no inventó ningún dato. Los problemas vinieron de cómo preparé las pruebas:
+
+| Qué hizo mal | Causa raíz | Cómo se detectó | Cómo se corrigió |
+|---|---|---|---|
+| Parecía que «solo llegaban algunos correos» | Gmail mandó a **Spam** 12 de los 18 correos (los que imitan un aviso de banco desde una cuenta personal), y `from:` no busca en Spam | El agente lo sospechó por el patrón de los que faltaban; lo confirmé en la carpeta Spam | «No es spam» y filtro «No marcar nunca como spam» para mi remitente |
+| Mi filtro de Gmail ponía la etiqueta `Banco` a todo lo que yo enviaba | Lo había creado así para las pruebas del día anterior | El agente vio la etiqueta en los correos que estaban en Spam | Quité esa acción del filtro; la etiqueta la pongo a mano, correo a correo |
+| La segunda tanda de envíos (11:23–11:28) salió mal: en el «Bizum de 20,00 €» pegué el texto de Carmen y en el de Romero se juntaron las líneas | Copiar y pegar a mano nueve correos seguidos | El agente revisó la lista de *Enviados* antes de procesarlos | Esa tanda no se usó; se probó solo con la primera |
+| Al principio no había ninguna ejecución, aunque yo creía haber probado | Solo había enviado los correos, sin pulsar *Execute workflow* | El agente no encontró ejecuciones ni filas en `Emails` | Procesar cada correo a mano después de etiquetarlo |
+| En F-003-5 la IA devolvió como concepto «El importe ya está disponible en tu cuenta» (la fixture espera `null`) | Al pegar el correo en Gmail se perdieron los saltos de línea y esa frase quedó justo detrás de «Concepto:» | Comparando el cuerpo que recibió n8n con el `.eml` | No se cambió nada: con ese texto la extracción es razonable y el caso sigue saliendo dudoso. El motivo cambia («el concepto no coincide» en vez de «nombre abreviado sin concepto»). Anotado en `plan.md` §7.6 |
+
+### Decisiones
+
+| Propuesta | Decisión | Por qué |
+|---|---|---|
+| Probar con Gmail real en vez del flujo `[TEST]` con Form Trigger | Aceptada | Ya tenía Gmail funcionando y así se prueba también el disparador de verdad |
+| Desactivar la vista de conversación en el Gmail de la tienda | Aceptada | Con conversaciones, la etiqueta se pone a todos los correos con el mismo asunto (01+05, 02+06, 03+07) y n8n cogería el que no toca |
+| F-003-11a/b y F-003-12 | Pendientes | No los exige el briefing; los pide `fixtures.md` como casos extra |
+| Repetir F-003-5 con el formato exacto del `.eml` | Rechazada por ahora | El resultado final es el mismo (pregunta a Marisa, no registra) |
+| Cambiar en `fixtures.md` el reinicio con `docker compose down -v` | Aceptada | Borraba también n8n; ahora se reinicia solo la tienda |
+
+### Lección
+
+En producción, que Gmail mande a Spam un aviso del banco es un riesgo real: n8n no lee el Spam, y ese pago no se procesaría sin que nadie se enterara. Hay que crear en la cuenta de la tienda un filtro «No marcar nunca como spam» para los remitentes reales del banco antes de activar el flujo.
+
+### Siguientes pasos
+
+- `/revisar-flujo 003` (T-003-08) y, si sale APROBADO, pasar la PR #70 a *Ready for review* y volver a pedir revisión a BrianStiv.
+- Antes de activar: remitentes reales del banco en `BANCO_REMITENTES` y en el filtro anti-spam, y el correo de Marisa en `MARISA_EMAIL`.
+- Opcional: F-003-11a/b (con *pinned data*) y F-003-12.
