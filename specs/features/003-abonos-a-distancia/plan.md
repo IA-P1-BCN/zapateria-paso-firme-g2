@@ -81,7 +81,7 @@ Con Gmail real, la ejecución manual del Gmail Trigger solo coge el **último** 
 
 ## 7. Prompt y esquema de extracción
 
-Detalle del nodo `Extraer datos del pago (IA)` (§1, nodo 8) y de las comprobaciones de `Validar extracción` (§1, nodo 9). Tarea T-003-03. **Nada de esta sección está probado contra un modelo**: modelo elegido: Gemini (capa gratuita), credencial `IA extracción`; se prueba en T-003-07.
+Detalle del nodo `Extraer datos del pago (IA)` (§1, nodo 8) y de las comprobaciones de `Validar extracción` (§1, nodo 9). Tarea T-003-03. Modelo: Gemini `models/gemini-3.5-flash-lite` (capa gratuita), credencial `IA extracción`. Probado con los 9 correos el 2026-10-29 (T-003-07, resultados en §7.6).
 
 Nodo recomendado: **Basic LLM Chain** + **Structured Output Parser** (esquema JSON manual, §7.3). Vale también **Information Extractor** con el mismo esquema y el mismo prompt de sistema. En los dos casos el modelo **solo extrae**; quién es el cliente y si se registra lo decide el flujo (Constitución II, AGENTS.md regla 6).
 
@@ -182,18 +182,18 @@ El Code no recalcula nada de la app ni consulta la API; solo compara la salida d
 
 ### 7.6 Extracción esperada / obtenida (correos de `data/correos/`)
 
-«Esperada» se deduce leyendo cada `.eml`. «Obtenida» se rellenará al probar con el modelo elegido; **no hay ningún resultado validado todavía**.
+«Esperada» se deduce leyendo cada `.eml`. «Obtenida»: prueba del 2026-10-29 con `models/gemini-3.5-flash-lite`, enviando cada correo por Gmail real al buzón de la tienda (ejecuciones 14–22 de la instancia local; T-003-07).
 
 | Correo | es_pago | ordenante | importe | concepto | tipo | referencia_apartado | Obtenida |
 |---|---|---|---|---|---|---|---|
-| `01_bizum_carmen.eml` | true | `CARMEN RUIZ GARCIA` | 10.00 | `zuecos` | bizum | null | no probado (Gemini; pendiente de T-003-07) |
-| `02_bizum_jorge.eml` | true | `JORGE M.` | 20.00 | `apartado 2 bota` | bizum | `"2"` | no probado (Gemini; pendiente de T-003-07) |
-| `03_transferencia_lucia.eml` | true | `LUCIA GOMEZ PEREZ` | 12.00 | `Liquidar mocasines` | transferencia | null | no probado (Gemini; pendiente de T-003-07) |
-| `04_bizum_laura.eml` | true | `LAURA O.` | 15.00 | `deportivas` | bizum | null | no probado (Gemini; pendiente de T-003-07) |
-| `05_bizum_romero.eml` | true | `ROMERO D` | 10.00 | null (concepto vacío) | bizum | null | no probado (Gemini; pendiente de T-003-07) |
-| `06_bizum_paula.eml` | true | `PAULA RAMOS LEON` | 20.00 | `zapatillas running perdón por el retraso` | bizum | null | no probado (Gemini; pendiente de T-003-07) |
-| `07_transferencia_desconocido.eml` | true | `ANTONIO FERNANDEZ SOTO` | 25.00 | `botas` | transferencia | null | no probado (Gemini; pendiente de T-003-07) |
-| `08_publicidad_banco.eml` | false | null | null (el «150 €» es publicidad, no un pago) | null | null | null | no probado (Gemini; pendiente de T-003-07) |
-| `09_bizum_silvia.eml` | true | `SILVIA CORTES` | 5.00 | `abono sandalias` | bizum | null | no probado (Gemini; pendiente de T-003-07) |
+| `01_bizum_carmen.eml` | true | `CARMEN RUIZ GARCIA` | 10.00 | `zuecos` | bizum | null | ✅ igual (ejec. 14) |
+| `02_bizum_jorge.eml` | true | `JORGE M.` | 20.00 | `apartado 2 bota` | bizum | `"2"` | ✅ igual; `referencia_apartado` = `"2"` y pasa V-7 (ejec. 15) |
+| `03_transferencia_lucia.eml` | true | `LUCIA GOMEZ PEREZ` | 12.00 | `Liquidar mocasines` | transferencia | null | ✅ igual; sin puntos de relleno (ejec. 16) |
+| `04_bizum_laura.eml` | true | `LAURA O.` | 15.00 | `deportivas` | bizum | null | ✅ igual (ejec. 17) |
+| `05_bizum_romero.eml` | true | `ROMERO D` | 10.00 | null (concepto vacío) | bizum | null | ⚠️ concepto `El importe ya está disponible en tu cuenta`: al pegar el correo en Gmail se perdieron los saltos de línea y esa frase quedó detrás de «Concepto:». El resto igual y sigue saliendo dudoso (ejec. 18) |
+| `06_bizum_paula.eml` | true | `PAULA RAMOS LEON` | 20.00 | `zapatillas running perdón por el retraso` | bizum | null | ✅ igual (ejec. 19) |
+| `07_transferencia_desconocido.eml` | true | `ANTONIO FERNANDEZ SOTO` | 25.00 | `botas` | transferencia | null | ✅ igual (ejec. 20) |
+| `08_publicidad_banco.eml` | false | null | null (el «150 €» es publicidad, no un pago) | null | null | null | ✅ igual; no toma el «150 €» (ejec. 21) |
+| `09_bizum_silvia.eml` | true | `SILVIA CORTES` | 5.00 | `abono sandalias` | bizum | null | ✅ igual (ejec. 22) |
 
 Puntos a vigilar al probar: 02 (que `referencia_apartado` salga como cadena `"2"` y pase V-7), 05 (que no rellene un concepto inventado), 08 (que no tome «150 €» como importe) y 03/07 (que el formato con puntos de relleno no se cuele en `ordenante` o `concepto`).

@@ -7,7 +7,7 @@ Los correos están en `data/correos/` (no se copian aquí). El resultado esperad
 ## 0. Datos de partida (evidencia)
 
 - **Fecha de arranque de la app:** 2026-10-27, tras `docker compose down -v && docker compose up -d`. Los datos de ejemplo (`backend/seed.py`) son **relativos al día de arranque**: las `fecha_limite` de abajo solo valen si se arranca ese día. Los importes son deterministas (`random.Random(42)`); las fechas se desplazan con el día de arranque.
-- **Antes de cada tanda de pruebas, reiniciar los datos:** `docker compose down -v && docker compose up -d`. Los casos F-003-1, 2, 3 y 9 cambian `pendiente`; repetirlos sin reiniciar da otros resultados.
+- **Antes de cada tanda de pruebas, reiniciar los datos de la tienda:** `docker compose rm -sf tienda`, `docker volume rm zapateria-paso-firme-g2_tienda_data` y `docker compose up -d tienda`. **No usar `docker compose down -v`**: borra también el volumen de n8n (flujos, credenciales y la Data Table `Emails`). Vaciar también la Data Table `Emails`. Los casos F-003-1, 2, 3 y 9 cambian `pendiente`; repetirlos sin reiniciar da otros resultados.
 - **Orden recomendado:** F-003-1 … F-003-9 en orden, luego F-003-10 (usa el estado tras F-003-1), F-003-11 y F-003-12.
 - `GET /api/apartados/resumen` al arrancar: 16 activos, 7 liquidados, 1 vencido.
 
