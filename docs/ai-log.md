@@ -263,3 +263,65 @@ No se registraron alucinaciones relevantes del modelo en esta sesión. Problemas
 - En la UI de n8n: renombrar la credencial a «Gmail tienda» (unificar el nombre con el resto), cambiar el destinatario por el correo real (el fijo de Levi y el del sticky), asignar `[ERR]` como Error Workflow en los Settings del resto de flujos (CA-3) y activarlo al final (última decisión del humano).
 - Probar el aviso en condiciones reales: el Error Trigger no se dispara en ejecuciones manuales; forzar un fallo en producción de un flujo de prueba.
 - Eliminar el flujo duplicado de `[000]` + `[001]` (id `KfQpai0qg9BtrmVr`) de la instancia.
+
+## 2026-10-29 · HU-03 · T-003-07 · Abonos a distancia: prueba con los 9 correos del banco
+
+- **Persona responsable:** levifvy
+- **Herramienta y modelo:** Claude Code (app de escritorio) · Claude Opus 5.5 (`claude-opus-5-5`), con el MCP de instancia de n8n para leer las ejecuciones y la Data Table. En el flujo, Gemini `models/gemini-3.5-flash-lite`
+- **Subagente / comando:** agente principal, sin subagentes. `/revisar-flujo` (T-003-08) todavía pendiente
+- **Rama / Spec / PR:** `feature/HU-03-abonos-a-distancia` · `specs/features/003-abonos-a-distancia/` · issue #12 · [PR #70](https://github.com/IA-P1-BCN/zapateria-paso-firme-g2/pull/70)
+
+### Prompt clave
+
+> «Ya hice la ejecución de todos los correos, ¿qué sigue para que la PR pueda ser aprobada?». Antes de eso, una ronda de preguntas cortas mientras probaba: por qué no llegaban los correos, cómo identificar cada uno en Gmail y cómo dejar solo uno con la etiqueta `Banco`.
+
+### Resultado
+
+Reinicié solo la tienda, vacié la Data Table `Emails` y probé los 9 `.eml` reenviándolos desde mi cuenta al buzón de la tienda. Los procesé de uno en uno: ponía la etiqueta `Banco` a un correo y lanzaba *Execute workflow*. El agente revisó cada ejecución por MCP y comparó con la API de la tienda.
+
+| Caso | Ejec. | Resultado | ¿Esperado? |
+|---|---|---|---|
+| F-003-1 Carmen | 14 | Registra 10 € (apartado 1: 19,50 → 9,50) | ✅ |
+| F-003-2 Jorge | 15 | Registra 20 € por la referencia «apartado 2» (79 → 59) | ✅ |
+| F-003-3 Lucía | 16 | Registra 12 € como `bizum`, queda **liquidado**; aviso de transferencia a Marisa | ✅ |
+| F-003-4 Laura | 17 | No registra (15 € > 10 € pendientes); aviso a Marisa; `rechazado` · 12 | ✅ |
+| F-003-5 Romero | 18 | No registra; pregunta a Marisa; `dudoso` | ✅ (motivo distinto, ver abajo) |
+| F-003-6 Paula | 19 | No registra (plazo vencido); aviso a Marisa; `rechazado` · 16 | ✅ |
+| F-003-7 Antonio | 20 | No registra (cliente desconocido); pregunta a Marisa; `dudoso` | ✅ |
+| F-003-8 Publicidad | 21 | `no_pago` → `ignorado`, sin aviso | ✅ |
+| F-003-9 Silvia | 22 | Registra 5 € aunque en la app lleva tilde (35 → 30) | ✅ |
+| F-003-10 Duplicado | 23 | `¿Ya procesado?` → sí; no llama a la IA ni a la API | ✅ |
+
+En la tienda solo aparecen abonos nuevos en los apartados 1, 2, 3 y 24. Se mandaron los 5 avisos a Marisa que tocaban. F-003-11a/b y F-003-12 no los hice porque el briefing solo pide que el flujo resuelva bien los correos de `data/correos/`; quedan pendientes en la PR.
+
+### Errores o alucinaciones
+
+La IA de extracción no inventó ningún dato. Los problemas vinieron de cómo preparé las pruebas:
+
+| Qué hizo mal | Causa raíz | Cómo se detectó | Cómo se corrigió |
+|---|---|---|---|
+| Parecía que «solo llegaban algunos correos» | Gmail mandó a **Spam** 12 de los 18 correos (los que imitan un aviso de banco desde una cuenta personal), y `from:` no busca en Spam | El agente lo sospechó por el patrón de los que faltaban; lo confirmé en la carpeta Spam | «No es spam» y filtro «No marcar nunca como spam» para mi remitente |
+| Mi filtro de Gmail ponía la etiqueta `Banco` a todo lo que yo enviaba | Lo había creado así para las pruebas del día anterior | El agente vio la etiqueta en los correos que estaban en Spam | Quité esa acción del filtro; la etiqueta la pongo a mano, correo a correo |
+| La segunda tanda de envíos (11:23–11:28) salió mal: en el «Bizum de 20,00 €» pegué el texto de Carmen y en el de Romero se juntaron las líneas | Copiar y pegar a mano nueve correos seguidos | El agente revisó la lista de *Enviados* antes de procesarlos | Esa tanda no se usó; se probó solo con la primera |
+| Al principio no había ninguna ejecución, aunque yo creía haber probado | Solo había enviado los correos, sin pulsar *Execute workflow* | El agente no encontró ejecuciones ni filas en `Emails` | Procesar cada correo a mano después de etiquetarlo |
+| En F-003-5 la IA devolvió como concepto «El importe ya está disponible en tu cuenta» (la fixture espera `null`) | Al pegar el correo en Gmail se perdieron los saltos de línea y esa frase quedó justo detrás de «Concepto:» | Comparando el cuerpo que recibió n8n con el `.eml` | No se cambió nada: con ese texto la extracción es razonable y el caso sigue saliendo dudoso. El motivo cambia («el concepto no coincide» en vez de «nombre abreviado sin concepto»). Anotado en `plan.md` §7.6 |
+
+### Decisiones
+
+| Propuesta | Decisión | Por qué |
+|---|---|---|
+| Probar con Gmail real en vez del flujo `[TEST]` con Form Trigger | Aceptada | Ya tenía Gmail funcionando y así se prueba también el disparador de verdad |
+| Desactivar la vista de conversación en el Gmail de la tienda | Aceptada | Con conversaciones, la etiqueta se pone a todos los correos con el mismo asunto (01+05, 02+06, 03+07) y n8n cogería el que no toca |
+| F-003-11a/b y F-003-12 | Pendientes | No los exige el briefing; los pide `fixtures.md` como casos extra |
+| Repetir F-003-5 con el formato exacto del `.eml` | Rechazada por ahora | El resultado final es el mismo (pregunta a Marisa, no registra) |
+| Cambiar en `fixtures.md` el reinicio con `docker compose down -v` | Aceptada | Borraba también n8n; ahora se reinicia solo la tienda |
+
+### Lección
+
+En producción, que Gmail mande a Spam un aviso del banco es un riesgo real: n8n no lee el Spam, y ese pago no se procesaría sin que nadie se enterara. Hay que crear en la cuenta de la tienda un filtro «No marcar nunca como spam» para los remitentes reales del banco antes de activar el flujo.
+
+### Siguientes pasos
+
+- `/revisar-flujo 003` (T-003-08) y, si sale APROBADO, pasar la PR #70 a *Ready for review* y volver a pedir revisión a BrianStiv.
+- Antes de activar: remitentes reales del banco en `BANCO_REMITENTES` y en el filtro anti-spam, y el correo de Marisa en `MARISA_EMAIL`.
+- Opcional: F-003-11a/b (con *pinned data*) y F-003-12.
