@@ -1,0 +1,200 @@
+{
+  "name": "[007] Recordatorios y Vencimientos",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "cronExpression": "0 6 * * *",
+        "timezone": "Europe/Madrid"
+      },
+      "name": "Programar recordatorios y vencimientos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://tienda:8000/api/apartados?estado=activo&fecha_limite={{ $now.format('YYYY-MM-DD') }}",
+        "method": "GET",
+        "responseFormat": "json",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-API-Key",
+              "value": "{{ $env.API_KEY }}"
+            }
+          ]
+        }
+      },
+      "name": "Obtener apartados activos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "recordatorios",
+              "value": "{{ $json.filter(item => item.pendiente > 0) }}"
+            },
+            {
+              "name": "vencimientos",
+              "value": "{{ $json.filter(item => item.pendiente == 0) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Separar recordatorios y vencimientos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "operation": "find",
+        "table": "avisos_enviados",
+        "filters": [
+          {
+            "field": "fecha",
+            "operation": "equal",
+            "value": "{{ $now.format('YYYY-MM-DD') }}"
+          }
+        ]
+      },
+      "name": "Buscar avisos enviados hoy",
+      "type": "n8n-nodes-base.n8nDataTable",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "{{ $json.recordatorios.length }}",
+              "operation": "greaterThan",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "¿Hay recordatorios?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "subject": "Recordatorio de pago pendiente",
+        "html": "<p>Estimado {{ $json.cliente }}, le recordamos que tiene un importe pendiente de {{ $json.pendiente }} €.</p>",
+        "toEmail": "{{ $json.email }}"
+      },
+      "name": "Enviar email recordatorio",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [1500, 200]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "avisos_enviados",
+        "additionalFields": {
+          "apartado_id": "{{ $json.id }}",
+          "tipo": "recordatorio",
+          "fecha": "{{ $now.format('YYYY-MM-DD') }}"
+        }
+      },
+      "name": "Registrar aviso recordatorio",
+      "type": "n8n-nodes-base.n8nDataTable",
+      "typeVersion": 1,
+      "position": [1750, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "{{ $json.vencimientos.length }}",
+              "operation": "greaterThan",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "¿Hay vencimientos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250, 400]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "subject": "Vencimiento de apartado",
+        "html": "<p>Estimado {{ $json.cliente }}, su apartado ha vencido. Se ha generado un vale.</p>",
+        "toEmail": "{{ $json.email }}"
+      },
+      "name": "Enviar email vencimiento",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [1500, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://tienda:8000/api/apartados/{{ $json.id }}/vencer",
+        "method": "POST",
+        "responseFormat": "json",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-API-Key",
+              "value": "{{ $env.API_KEY }}"
+            }
+          ]
+        }
+      },
+      "name": "Marcar como vencido",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [1750, 400]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "avisos_enviados",
+        "additionalFields": {
+          "apartado_id": "{{ $json.id }}",
+          "tipo": "vencimiento",
+          "fecha": "{{ $now.format('YYYY-MM-DD') }}"
+        }
+      },
+      "name": "Registrar aviso vencimiento",
+      "type": "n8n-nodes-base.n8nDataTable",
+      "typeVersion": 1,
+      "position": [2000, 400]
+    },
+    {
+      "parameters": {
+        "errorWorkflow": "005-error-workflow"
+      },
+      "name": "Manejo de errores",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [2500, 300]
+    }
+  ],
+  "connections": {
+    "Programar recordatorios y vencimientos": {"main": [{"node": "Obtener apartados activos", "type": "main", "index": 0}]},
+    "Obtener apartados activos": {"main": [{"node": "Separar recordatorios y vencimientos", "type": "main", "index": 0}]},
+    "Separar recordatorios y vencimientos": {"main": [{"node": "Buscar avisos enviados hoy", "type": "main", "index": 0}]},
+    "Buscar avisos enviados hoy": {"main": [{"node": "¿Hay recordatorios?", "type": "main", "index": 0}, {"node": "¿Hay vencimientos?", "type": "main", "index": 0}]},
+    "¿Hay recordatorios?": {"main": [{"node": "Enviar email recordatorio", "type": "main", "index": 0}], "else": [{"node": "¿Hay vencimientos?", "type": "main", "index": 0}]},
+    "Enviar email recordatorio": {"main": [{"node": "Registrar aviso recordatorio", "type": "main", "index": 0}]},
+    "¿Hay vencimientos?": {"main": [{"node": "Enviar email vencimiento", "type": "main", "index": 0}]},
+    "Enviar email vencimiento": {"main": [{"node": "Marcar como vencido", "type": "main", "index": 0}]},
+    "Marcar como vencido": {"main": [{"node": "Registrar aviso vencimiento", "type": "main", "index": 0}]}
+  }
+}
