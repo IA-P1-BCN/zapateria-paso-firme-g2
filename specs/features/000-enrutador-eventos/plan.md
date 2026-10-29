@@ -11,8 +11,8 @@
 |---|---|---|---|
 | 1 | `Recibir evento de la tienda` | Webhook (POST, path `tienda`, Respond: Immediately) | Recibe el aviso |
 | 2 | `¿Qué evento es?` | Switch (modo Rules sobre `{{ $json.body.evento }}`, fallback activado) | Reparte |
-| 3a | `Confirmación pendiente` | No Op | Provisional; se sustituye por Execute Workflow → `[001]` en T-000-08 |
-| 3b | `Recibo pendiente` | No Op | Provisional; se sustituye por Execute Workflow → `[002]` en T-000-08 |
+| 3a | `Extraer datos del apartado` → `Llamar a confirmación de apartado` | Code + Execute Workflow | Cableado a `[001]` (T-000-08) |
+| 3b | `Extraer datos del abono` → `Llamar a recibo de abono` | Code + Execute Workflow | Cableado a `[002]` (T-000-08) |
 | 3c | `Venta registrada (sin flujo aún)` | No Op | Hasta que exista `006` |
 | 3d | `Apartado vencido (sin flujo aún)` | No Op | Hasta que exista `007` |
 | 3e | `Evento desconocido` | No Op | Rama fallback |
@@ -29,8 +29,8 @@ Ninguna.
 
 ## 4. Manejo de errores
 
-- Sin Error Workflow asignado todavía: se asignará `[ERR] Avisos de error` cuando exista `005` (T-000-08).
-- En esta entrega no hay Execute Workflow; la decisión sobre «Wait for sub-workflow completion» se toma al cablear 001/002 en T-000-08.
+- Error Workflow asignado: `[ERR] Avisos de error` (005), tras existir el flujo (T-000-08).
+- Los sub-flujos 001 y 002 se invocan con Execute Workflow (un sub-flujo por evento); se pasa el `datos` del webhook como entrada.
 
 ## 5. Datos de prueba
 

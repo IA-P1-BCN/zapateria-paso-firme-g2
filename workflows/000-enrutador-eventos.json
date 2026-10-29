@@ -169,17 +169,6 @@
     },
     {
       "parameters": {},
-      "id": "6ad66c7a-9fd7-4400-ad76-7249be89147a",
-      "name": "Recibo pendiente",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [
-        720,
-        220
-      ]
-    },
-    {
-      "parameters": {},
       "id": "fbb46fb5-e42d-4956-9664-3836f9c9f1a4",
       "name": "Venta registrada (sin flujo aún)",
       "type": "n8n-nodes-base.noOp",
@@ -213,7 +202,7 @@
     },
     {
       "parameters": {
-        "content": "## [000] Enrutador de eventos\nÚnico webhook de la app: `POST /webhook/tienda`. Reparte cada evento por su rama.\n\n**Tras importar:** en el nodo `Llamar a confirmación de apartado`, marca el workflow de destino `[001] Confirmación de apartado` (en el JSON va `<<ASIGNAR_EN_N8N>>` porque aún no se conoce su id).",
+        "content": "## [000] Enrutador de eventos\nÚnico webhook de la app: `POST /webhook/tienda`. Reparte cada evento por su rama.\n\n**Tras importar:** en los nodos `Llamar a confirmación de apartado` y `Llamar a recibo de abono`, marca el workflow de destino (`[001]` y `[002]`) (en el JSON va `<<ASIGNAR_EN_N8N>>` porque aún no se conoce su id). Asigna también `[ERR] Avisos de error` como Error Workflow en los Settings del flujo.",
         "height": 260,
         "width": 400
       },
@@ -224,6 +213,39 @@
       "position": [
         180,
         -80
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Desempaqueta el evento del webhook: pone `body.datos` (el abono/apartado) en la raíz del item\n// para que el sub-flujo [002] reciba desde su Execute Workflow Trigger los datos planos\nconst { body } = $json;\nreturn body?.datos ?? {};"
+      },
+      "id": "000-n-extract-002",
+      "name": "Extraer datos del abono",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "<<ASIGNAR_EN_N8N>>",
+          "mode": "list",
+          "cachedResultName": "<<ASIGNAR_EN_N8N: [002] Recibo de abono>>"
+        }
+      },
+      "id": "000-n-executar-003",
+      "name": "Llamar a recibo de abono",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        940,
+        220
       ]
     }
   ],
@@ -250,7 +272,7 @@
         ],
         [
           {
-            "node": "Recibo pendiente",
+            "node": "Extraer datos del abono",
             "type": "main",
             "index": 0
           }
@@ -288,11 +310,23 @@
           }
         ]
       ]
+    },
+    "Extraer datos del abono": {
+      "main": [
+        [
+          {
+            "node": "Llamar a recibo de abono",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "pinData": {},
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "errorWorkflow": "[ERR] Avisos de error"
   },
   "staticData": null,
   "tags": []

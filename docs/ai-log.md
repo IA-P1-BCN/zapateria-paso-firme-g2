@@ -325,3 +325,40 @@ En producción, que Gmail mande a Spam un aviso del banco es un riesgo real: n8n
 - `/revisar-flujo 003` (T-003-08) y, si sale APROBADO, pasar la PR #70 a *Ready for review* y volver a pedir revisión a BrianStiv.
 - Antes de activar: remitentes reales del banco en `BANCO_REMITENTES` y en el filtro anti-spam, y el correo de Marisa en `MARISA_EMAIL`.
 - Opcional: F-003-11a/b (con *pinned data*) y F-003-12.
+
+## 2026-10-29 · 000 · T-000-08 · Cableado a 001/002 y Error Workflow 005
+
+- **Persona responsable:** Miguel Matesanz (`mmatesanzg23`)
+- **Herramienta y modelo:** OpenCode · big-pickle
+- **Subagente / comando:** agente principal; modificación directa del JSON (sin subagente).
+- **Rama / Spec / PR:** `feature/HU-00-enrutador-eventos` · `specs/features/000-enrutador-eventos/` · cambios sobre `workflows/000-enrutador-eventos.json`, `workflows/001-confirmacion-apartado.json`, `workflows/002-recibo-abono.json`
+
+### Prompt clave
+
+> Revisa si hay que hacer alguna modificación del cableado ahora que existe el workflow de errores (005).
+
+### Resultado
+
+- `workflows/000-enrutador-eventos.json`: añadido `settings.errorWorkflow = "[ERR] Avisos de error"`; sustituido el No Op `Recibo pendiente` por `Extraer datos del abono` (Code) + `Llamar a recibo de abono` (ExecuteWorkflow a 002), igual que el cableado de 001. Nota sticky actualizada.
+- `workflows/001-confirmacion-apartado.json` y `workflows/002-recibo-abono.json`: `settings.errorWorkflow` sustituido de `<<ASIGNAR_EN_N8N>>` a `[ERR] Avisos de error`.
+- `workflows/004-cierre-diario.json`: sin cambios (ya tenía el Error Workflow correcto).
+- `specs/features/000-enrutador-eventos/`: `tasks.md` T-000-08 marcado como hecho; `plan.md` y `spec.md` actualizados para reflejar el cableado.
+- `validate_workflows.py`: 9/9 flujos válidos.
+
+### Errores o alucinaciones
+
+No se registraron alucinaciones. Los nodos ExecuteWorkflow siguen con `workflowId = <<ASIGNAR_EN_N8N>>` (se asignan en la UI de n8n al importar, como ya estaba previsto).
+
+### Decisiones
+
+| Propuesta | Decisión | Por qué |
+|---|---|---|
+| Cablear `abono.registrado` a 002 ahora que existe | Aceptada | T-000-08 lo preveía y 002 es sub-flujo con ExecuteWorkflowTrigger |
+| Asignar `[ERR] Avisos de error` como Error Workflow en 000/001/002 | Aceptada | 005 ya existe; elimina el placeholder `<<ASIGNAR_EN_N8N>>` |
+| Cablear `venta.registrada`/`apartado.vencido` a 006/007 | Rechazada (aplazada) | 006 y 007 son flujos programados, no sub-flujos; no se invocan por ExecuteWorkflow |
+| Modificar 004 | Rechazada (no necesaria) | Ya tenía el Error Workflow correcto |
+
+### Siguientes pasos
+
+- Importar los flujos actualizados en n8n y asignar los `workflowId` de 001/002 en los nodos ExecuteWorkflow.
+- T-000-06: PR y revisión humana (Levi).

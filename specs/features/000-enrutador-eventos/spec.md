@@ -51,7 +51,7 @@ Ninguna regla de importes. Constitución I (se reenvía `datos` tal cual, sin tr
 | Caso | Comportamiento esperado |
 |---|---|
 | `evento` desconocido o vacío | Rama *fallback*; la ejecución termina bien y no avisa al cliente |
-| Falla un flujo hijo | Lo recoge el Error Workflow (`005`) cuando el enrutador esté cableado a 001/002; mientras, las ramas No Op no fallan. El Error Workflow del enrutador se asigna en T-000-08 |
+| Falla un flujo hijo | Lo recoge el Error Workflow (`[ERR] Avisos de error`, 005), asignado en T-000-08; las ramas No Op de venta/vencido no fallan |
 | n8n caído cuando la app avisa | El aviso se pierde (la app no reintenta). Fuera de alcance: los flujos programados cubren los datos críticos |
 
 ## 8. Criterios de aceptación

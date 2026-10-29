@@ -342,7 +342,7 @@
   "pinData": {},
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "<<ASIGNAR_EN_N8N>>"
+    "errorWorkflow": "[ERR] Avisos de error"
   },
   "tags": []
 }
