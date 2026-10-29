@@ -16,6 +16,31 @@
     },
     {
       "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c001-set-01",
+              "name": "correo_tienda",
+              "value": "tienda@pasofirme.es",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "c001-set-01b",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "// Formatea importes al estándar español (\"79,90 €\") y fechas a \"DD/MM/AAAA\"\n// Respetando los datos calculados por la app (Constitución I)\nconst item = $json;\n\nconst formateadorMoneda = new Intl.NumberFormat('es-ES', {\n  style: 'currency',\n  currency: 'EUR'\n});\n\nconst precio_formateado = formateadorMoneda.format(item.precio || 0);\nconst abonado_formateado = formateadorMoneda.format(item.abonado || 0);\nconst pendiente_formateado = formateadorMoneda.format(item.pendiente || 0);\n\nlet fecha_limite_formateada = item.fecha_limite || '';\nif (typeof fecha_limite_formateada === 'string' && fecha_limite_formateada.includes('-')) {\n  const partes = fecha_limite_formateada.split('-');\n  if (partes.length === 3) {\n    fecha_limite_formateada = `${partes[2]}/${partes[1]}/${partes[0]}`;\n  }\n}\n\n// Omite la talla si es nula o vacía sin mostrar 'null' (CA-2 y CA-3)\nconst detalle_producto = item.talla ? `${item.producto} (Talla ${item.talla})` : item.producto;\n\n// Indica si está liquidado desde el alta\nconst es_liquidado = item.estado === 'liquidado';\n\nreturn {\n  ...item,\n  precio_formateado,\n  abonado_formateado,\n  pendiente_formateado,\n  fecha_limite_formateada,\n  detalle_producto,\n  es_liquidado\n};"
       },
@@ -24,7 +49,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        480,
+        640,
         300
       ]
     },
@@ -40,7 +65,7 @@
           "conditions": [
             {
               "id": "c1",
-              "leftValue": "={{ $json.email }}",
+              "leftValue": "={{ $json.email || '' }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
@@ -56,7 +81,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
-        720,
+        880,
         300
       ]
     },
@@ -67,14 +92,14 @@
         "sendTo": "={{ $json.email }}",
         "subject": "Confirmación de tu apartado · Paso Firme",
         "emailType": "html",
-        "message": "=<p>Hola <strong>{{ $json.cliente }}</strong>,</p>\n<p>Hemos registrado correctamente tu apartado <strong>#{{ $json.id }}</strong> en Zapatería Paso Firme.</p>\n<p><strong>Detalle de tu apartado:</strong></p>\n<ul>\n  <li><strong>Producto:</strong> {{ $json.detalle_producto }}</li>\n  <li><strong>Precio total:</strong> {{ $json.precio_formateado }}</li>\n  <li><strong>Abonado:</strong> {{ $json.abonado_formateado }}</li>\n  {{ $json.es_liquidado ? '' : '<li><strong>Pendiente:</strong> ' + $json.pendiente_formateado + '</li>' }}\n  <li><strong>Fecha límite para retirar:</strong> {{ $json.fecha_limite_formateada }}</li>\n</ul>\n{{ $json.es_liquidado ? '<p><strong>¡Ya está totalmente pagado! Puedes pasar a recogerlo cuando quieras.</strong></p>' : '<p>Recuerda que tienes hasta la fecha límite para completar los pagos restantes.</p>' }}\n<p>Gracias por confiar en Paso Firme.</p>"
+        "message": "=<p>Hola <strong>{{ $json.cliente }}</strong>,</p>\n<p>Hemos registrado correctamente tu apartado <strong>#{{ $json.id }}</strong> en Zapatería Paso Firme.</p>\n<p><strong>Detalle de tu apartado:</strong></p>\n<ul>\n  <li><strong>Producto:</strong> {{ $json.detalle_producto }}</li>\n  <li><strong>Precio total:</strong> {{ $json.precio_formateado }}</li>\n  <li><strong>Abonado:</strong> {{ $json.abonado_formateado }}</li>\n  {{ $json.es_liquidado ? '' : '<li><strong>Pendiente:</strong> ' + $json.pendiente_formateado + '</li>' }}\n  <li><strong>Fecha límite para retirar:</strong> {{ $json.fecha_limite_formateada }}</li>\n</ul>\n{{ $json.es_liquidado ? '<p><strong>Ya está pagado: puedes recogerlo cuando quieras</strong></p>' : '<p>Recuerda que tienes hasta la fecha límite para completar los pagos restantes.</p>' }}\n<p>Gracias por confiar en Paso Firme.</p>"
       },
       "id": "c001-gmail-cliente-04",
       "name": "Enviar confirmación al cliente",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        960,
+        1120,
         200
       ],
       "retryOnFail": true,
@@ -91,7 +116,7 @@
       "parameters": {
         "resource": "message",
         "operation": "send",
-        "sendTo": "tienda@pasofirme.es",
+        "sendTo": "={{ $json.correo_tienda }}",
         "subject": "=Aviso: Apartado #{{ $json.id }} sin correo",
         "emailType": "html",
         "message": "=<p><strong>Aviso de no envío para la tienda (Marisa):</strong></p>\n<p>No se pudo enviar la confirmación del apartado <strong>#{{ $json.id }}</strong> porque el cliente <strong>{{ $json.cliente }}</strong> no tiene correo electrónico registrado.</p>\n<p><strong>Detalle:</strong></p>\n<ul>\n  <li><strong>Producto:</strong> {{ $json.detalle_producto }}</li>\n  <li><strong>Abonado:</strong> {{ $json.abonado_formateado }}</li>\n  <li><strong>Pendiente:</strong> {{ $json.pendiente_formateado }}</li>\n  <li><strong>Fecha límite:</strong> {{ $json.fecha_limite_formateada }}</li>\n</ul>"
@@ -101,7 +126,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        960,
+        1120,
         420
       ],
       "retryOnFail": true,
@@ -113,10 +138,36 @@
           "name": "Gmail tienda"
         }
       }
+    },
+    {
+      "parameters": {
+        "content": "## [001] Confirmación de apartado\nSpec: specs/features/001-confirmacion-apartado/ (FL-01, HU-01). Se ejecuta desde `[000] Enrutador de eventos` con el apartado en la raíz.\n\n**Tras importar:**\n- Asignar la credencial Gmail OAuth2 `Gmail tienda` en los 2 nodos de envío.\n- Settings → Error workflow: `[ERR] Avisos de error` (en el JSON va `<<ASIGNAR_EN_N8N>>`).\n- `correo_tienda` en el nodo `Configuración` es orientativo: `<<PENDIENTE: dirección real de la tienda, la decide Levi>>`.",
+        "height": 320,
+        "width": 440
+      },
+      "id": "c001-nota-06",
+      "name": "Nota: cómo usar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -80
+      ]
     }
   ],
   "connections": {
     "Recibir apartado creado": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
       "main": [
         [
           {
@@ -160,6 +211,6 @@
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "errorWorkflow": "[ERR] Avisos de error"
+    "errorWorkflow": "<<ASIGNAR_EN_N8N>>"
   }
 }
